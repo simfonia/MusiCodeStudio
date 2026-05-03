@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: sans-serif; background: #f9f7f2; padding: 20px; color: #333; }
+        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 5px solid #d4c5af; max-width: 800px; margin: auto; margin-bottom: 20px; }
+        h2 { border-bottom: 1px solid #eee; padding-bottom: 10px; color: #5d5d5d; }
+        ul { line-height: 1.8; }
+        b { color: #8b7d6b; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>2026-05-03 工作摘要 (1)</h2>
+        <ul>
+            <li>確立<b>「表驅動管理 (Table-Driven Management)」</b>開發模式。</li>
+            <li>更新 <b>GEMINI.md</b> 規範，將功能對照表標準化為 HTML 格式。</li>
+            <li>對照表格式全面升級為 <b>HTML</b> (採用 Studio Paper 質感視覺設計)。</li>
+            <li>建立首批功能對照表：<b>AudioEngine</b> (C++) 與 <b>UI</b> (TypeScript) 服務。</li>
+        </ul>
+    </div>
+    <div class="card" style="border-left-color: #a2b9bc;">
+        <h2>2026-05-03 工作摘要 (2)：核心重構、知識庫與環境優化</h2>
+        <ul>
+            <li>完成 <b>Main.cpp</b> 的模組化拆解。</li>
+            <li>建立 <b>Source/HttpServer</b> (h/cpp)：獨立管理 HTTP 通訊與指令解析。</li>
+            <li>建立 <b>Source/MainWindow</b> (h/cpp)：獨立管理 UI 視窗與元件。</li>
+            <li>建立 <b>Framework_API_Index.html</b>：整合 Tracktion Engine, JUCE, Blockly 官方文件索引。</li>
+            <li>更新 <b>GEMINI.md</b>：強制執行「先查證、再實作」的 API 使用流程。</li>
+            <li>設定 <b>VS Code Launch/Tasks</b>：支援 F5 直接執行 <code>npm run dev</code> (UI 專案)。</li>
+            <li>同步更新 <b>AudioEngine_FunctionsTable.html</b>：反映重構後的檔案映射。</li>
+        </ul>
+    </div>
+
+</body>
+</html>

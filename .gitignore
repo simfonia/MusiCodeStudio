@@ -1,0 +1,64 @@
+# --- Node.js / React ---
+node_modules/
+dist/
+dist-native/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- C++ / CMake / Visual Studio ---
+build/
+build_vscode/
+.vs/
+out/
+bin/
+*.user
+*.suo
+*.sln.doccas
+*.cache
+*.opendb
+*.db
+*.VC.db
+*.pdb
+*.obj
+*.lib
+*.dll
+*.exe
+*.exp
+*.ilk
+*.manifest
+*.res
+*.rc.res
+*.idb
+*.tlog
+*.lastbuildstate
+CMakeCache.txt
+CMakeFiles/
+CMakeSettings.json
+*.cmake
+.cmake/
+
+# --- Tracktion Engine / JUCE ---
+JuceLibraryCode/
+MusiCodeEngine_artefacts/
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# --- Temporary ---
+*.tmp
+*.temp
+log/work/*.md
+!log/work/2026-*.md
+backup/

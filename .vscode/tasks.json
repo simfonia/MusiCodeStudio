@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "npm: dev (ui)",
+            "type": "npm",
+            "script": "dev",
+            "path": "ui",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "啟動前端 Vite 開發伺服器"
+        }
+    ]
+}

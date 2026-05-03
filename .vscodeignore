@@ -1,0 +1,13 @@
+node_modules/**
+build/**
+build_vscode/**
+engine/tracktion_engine/**
+.git/**
+.vs/**
+.vscode/**
+backup/**
+log/work/**
+*.pdb
+*.obj
+*.lib
+*.exe

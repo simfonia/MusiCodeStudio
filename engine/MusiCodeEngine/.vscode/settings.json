@@ -1,0 +1,11 @@
+{
+    "cmake.generator": "Visual Studio 17 2022",
+    "cmake.configureSettings": {
+        "CMAKE_GENERATOR_PLATFORM": "x64"
+    },
+    "cmake.preferredGenerators": [
+        "Visual Studio 17 2022"
+    ],
+    "cmake.buildDirectory": "${workspaceFolder}/build_vscode",
+    "cmake.configureOnOpen": true
+}

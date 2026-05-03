@@ -1,0 +1,9 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/engine/MusiCodeEngine",
+    "cmake.buildDirectory": "${workspaceFolder}/engine/MusiCodeEngine/build_vscode",
+    "cmake.configureOnOpen": true,
+    "cmake.ignoreCMakeLists": [
+        "engine/tracktion_engine/CMakeLists.txt",
+        "engine/tracktion_engine/modules/juce/CMakeLists.txt"
+    ]
+}

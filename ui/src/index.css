@@ -1,0 +1,184 @@
+:root {
+  --bg-app: #f5f5f7;       /* 蘋果風格淺灰 */
+  --bg-paper: #ffffff;     /* 純白紙張感 */
+  --border: #e1e1e3;
+  --text-main: #1d1d1f;
+  --text-dim: #86868b;
+  --accent: #007aff;       /* 經典藍 */
+  --accent-soft: rgba(0, 122, 255, 0.1);
+  --danger: #ff3b30;
+  
+  /* 音高色彩編碼 (Boomwhackers 標準) */
+  --note-c: #ff2d55;
+  --note-d: #ff9500;
+  --note-e: #ffcc00;
+  --note-f: #4cd964;
+  --note-g: #5ac8fa;
+  --note-a: #007aff;
+  --note-b: #5856d6;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-main);
+  background-color: var(--bg-app);
+}
+
+body {
+  margin: 0;
+  overflow: hidden; /* 防止整個視窗滾動 */
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 頂部控制列 */
+.toolbar {
+  height: 60px;
+  background: var(--bg-paper);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 20px;
+  z-index: 100;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--accent);
+  margin-right: 20px;
+}
+
+/* 主容器 */
+.main-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 軌道列表 (左側) */
+.track-list {
+  width: 280px;
+  background: var(--bg-app);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.track-header {
+  height: 120px;
+  background: var(--bg-paper);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+/* 編輯區 (中間) */
+.editor-container {
+  flex: 1;
+  background: var(--bg-paper);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+/* 插件鏈 (右側) */
+.plugin-rack {
+  width: 200px;
+  background: var(--bg-app);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
+}
+
+.plugin-slot {
+  height: 40px;
+  background: var(--bg-paper);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.plugin-slot.instrument {
+  border-left: 4px solid var(--accent);
+}
+
+.plugin-slot.effect {
+  border-left: 4px solid var(--note-f);
+}
+
+.plugin-slot.empty {
+  border-style: dashed;
+  color: var(--text-dim);
+  justify-content: center;
+}
+
+/* 視圖切換器 */
+.view-selector {
+  height: 40px;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 5px;
+}
+
+.view-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.view-btn.active {
+  background: var(--bg-paper);
+  border-color: var(--border);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 畫布內容區 */
+.canvas-area {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+}
+
+.transport-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-app);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.transport-btn:hover {
+  background: var(--border);
+}
+
+.transport-btn.record.active {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>UI 功能與檔案對照表</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f7f2;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            border-left: 5px solid #c9dae1; /* Slightly blue for UI */
+        }
+        h1 {
+            color: #5d5d5d;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f4f1ea;
+            color: #666;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+        tr:hover {
+            background-color: #fafafa;
+        }
+        .code {
+            font-family: 'Consolas', monospace;
+            background: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            background: #eef4f7;
+            color: #5a8aa2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UI 功能與檔案對照表</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>功能模組</th>
+                    <th>實作檔案</th>
+                    <th>關鍵函數 / API</th>
+                    <th>外部依賴</th>
+                    <th>備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>引擎通訊服務</td>
+                    <td><span class="code">EngineService.ts</span></td>
+                    <td><span class="code">sendCommand()</span></td>
+                    <td><span class="tag">fetch API</span></td>
+                    <td>單例模式，發送 JSON 指令。</td>
+                </tr>
+                <tr>
+                    <td>播放控制</td>
+                    <td><span class="code">EngineService.ts</span></td>
+                    <td><span class="code">play()</span>, <span class="code">stop()</span></td>
+                    <td><span class="code">sendCommand()</span></td>
+                    <td>對應 <span class="code">transport_play</span>, <span class="code">transport_stop</span> 指令。</td>
+                </tr>
+                <tr>
+                    <td>BPM 設定</td>
+                    <td><span class="code">EngineService.ts</span></td>
+                    <td><span class="code">setBPM()</span></td>
+                    <td><span class="code">sendCommand()</span></td>
+                    <td>對應 <span class="code">set_bpm</span> 指令 (C++ 端待解析)。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
