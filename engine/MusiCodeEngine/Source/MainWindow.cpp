@@ -13,7 +13,8 @@ MainWindow::MainWindow(juce::String name)
     statusLabel.setJustificationType(juce::Justification::centred);
     setContentOwned(&statusLabel, false);
 
-    server = std::make_unique<HttpServer>(statusLabel);
+    audioEngine = std::make_unique<AudioEngine>();
+    server = std::make_unique<HttpServer>(statusLabel, *audioEngine);
     setSize(400, 200);
 }
 

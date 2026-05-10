@@ -77,39 +77,46 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>HTTP 伺服器</td>
-                    <td><span class="code">Source/HttpServer.cpp</span></td>
-                    <td><span class="code">HttpServer::run()</span></td>
-                    <td><span class="tag">juce::StreamingSocket</span></td>
-                    <td>監聽 9001 Port，處理 CORS。</td>
+                    <td>音訊引擎核心</td>
+                    <td><span class="code">Source/AudioEngine.cpp</span></td>
+                    <td><span class="code">AudioEngine()</span>, <span class="code">play()</span>, <span class="code">stop()</span></td>
+                    <td><span class="tag">te::Engine</span>, <span class="tag">te::Edit</span></td>
+                    <td>管理播放狀態與 BPM。</td>
                 </tr>
                 <tr>
-                    <td>指令解析</td>
+                    <td>HTTP 伺服器</td>
                     <td><span class="code">Source/HttpServer.cpp</span></td>
-                    <td><span class="code">run()</span> 內的指令判定</td>
-                    <td><span class="tag">juce::String</span></td>
-                    <td>支援 <span class="code">transport_play</span>, <span class="code">transport_stop</span>。</td>
+                    <td><span class="code">HttpServer::run()</span>, <span class="code">handleRequest()</span></td>
+                    <td><span class="tag">juce::StreamingSocket</span></td>
+                    <td>接收指令並解析。</td>
+                </tr>
+                <tr>
+                    <td>指令解析 (JSON)</td>
+                    <td><span class="code">Source/HttpServer.cpp</span></td>
+                    <td><span class="code">processCommand()</span></td>
+                    <td><span class="tag">juce::JSON</span></td>
+                    <td>解析 JSON 指令，對應前端 <span class="code">action</span> 欄位。支援 <span class="code">transport_play</span>, <span class="code">transport_stop</span>, <span class="code">set_bpm</span>。</td>
                 </tr>
                 <tr>
                     <td>UI 狀態顯示</td>
                     <td><span class="code">Source/HttpServer.cpp</span></td>
                     <td><span class="code">updateStatus()</span></td>
                     <td><span class="tag">juce::Label</span></td>
-                    <td>透過 <span class="code">callAsync</span> 非同步更新 UI。</td>
+                    <td>同步引擎狀態至視窗文字。</td>
                 </tr>
                 <tr>
                     <td>主視窗管理</td>
                     <td><span class="code">Source/MainWindow.cpp</span></td>
                     <td><span class="code">MainWindow()</span></td>
                     <td><span class="tag">juce::DocumentWindow</span></td>
-                    <td>建立視窗、Label 與啟動 HttpServer。</td>
+                    <td>初始化 <span class="code">AudioEngine</span> 並傳入 <span class="code">HttpServer</span>。</td>
                 </tr>
                 <tr>
                     <td>應用程式框架</td>
                     <td><span class="code">Main.cpp</span></td>
                     <td><span class="code">initialise()</span>, <span class="code">shutdown()</span></td>
                     <td><span class="tag">juce::JUCEApplication</span></td>
-                    <td>引擎進入點，管理 MainWindow 生命週期。</td>
+                    <td>管理 MainWindow 生命週期。</td>
                 </tr>
             </tbody>
         </table>

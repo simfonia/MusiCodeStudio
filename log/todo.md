@@ -14,8 +14,10 @@
 
 
 ## [中期任務] 引擎核心與播放器
-- [ ] 解決 te::Edit 私有建構子問題，重新掛載音訊引擎 (核心優先)
-- [ ] 實作 C++ 端 JSON 指令解析器，支援多參數傳遞
+- [x] 解決 te::Edit 私有建構子問題，重新掛載音訊引擎 (核心優先)
+- [x] 調查內建插件建立失敗原因 (已改用 PluginCache::createNewPlugin 與 FourOscPlugin::xmlTypeName 確保正確初始化)
+- [x] 實作 C++ 端 JSON 指令解析器，對齊前端 EngineService (支援 transport_play, transport_stop, set_bpm)
+
 - [ ] 整合系統預設音訊輸出 (AudioDeviceSelector)
 
 ## [核心開發] 積木合成器 (原 #wavecode 功能轉移)

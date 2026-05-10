@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "AudioEngine.h"
 #include "HttpServer.h"
 
 /**
@@ -13,6 +14,8 @@ public:
 
 private:
     juce::Label statusLabel;
+    std::unique_ptr<AudioEngine> audioEngine;
     std::unique_ptr<HttpServer> server;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
 };
+

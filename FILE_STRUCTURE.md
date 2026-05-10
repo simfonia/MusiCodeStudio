@@ -34,4 +34,5 @@ C:\Workspace\MusiCodeStudio\
 │       ├── UI_FunctionsTable.html
 │       └── Framework_API_Index.html (新增：框架 API 知識庫)
 │   └── work\
-│       └── 2026-05-03.html (今日工作摘要)
+│       ├── 2026-05-03.html (今日工作摘要)
+│       └── 2026-05-10.md (新增：JSON 指令解析與插件修正)

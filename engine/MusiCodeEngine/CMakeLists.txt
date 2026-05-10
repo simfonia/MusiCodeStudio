@@ -19,6 +19,8 @@ target_sources(MusiCodeEngine PRIVATE
     Source/HttpServer.cpp
     Source/MainWindow.h
     Source/MainWindow.cpp
+    Source/AudioEngine.h
+    Source/AudioEngine.cpp
 )
 
 # 連結模組

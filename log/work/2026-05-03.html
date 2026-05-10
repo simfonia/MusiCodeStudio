@@ -8,30 +8,35 @@
         h2 { border-bottom: 1px solid #eee; padding-bottom: 10px; color: #5d5d5d; }
         ul { line-height: 1.8; }
         b { color: #8b7d6b; }
+        .status-fail { color: #d9534f; font-weight: bold; }
+        .status-ok { color: #5cb85c; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>2026-05-03 工作摘要 (1)</h2>
+        <h2>2026-05-03 工作摘要 (1)：管理與環境</h2>
         <ul>
-            <li>確立<b>「表驅動管理 (Table-Driven Management)」</b>開發模式。</li>
-            <li>更新 <b>GEMINI.md</b> 規範，將功能對照表標準化為 HTML 格式。</li>
-            <li>對照表格式全面升級為 <b>HTML</b> (採用 Studio Paper 質感視覺設計)。</li>
-            <li>建立首批功能對照表：<b>AudioEngine</b> (C++) 與 <b>UI</b> (TypeScript) 服務。</li>
+            <li>確立<b>「表驅動管理」</b>模式，建立 HTML 格式功能對照表。</li>
+            <li>建立 <b>Framework_API_Index.html</b>，整合 Tracktion Engine 與 JUCE 文檔索引。</li>
+            <li>優化 VS Code 環境：支援 <b>F5 啟動前端</b>，配置 VS 2026 <b>資料夾模式</b>編譯。</li>
         </ul>
     </div>
     <div class="card" style="border-left-color: #a2b9bc;">
-        <h2>2026-05-03 工作摘要 (2)：核心重構、知識庫與環境優化</h2>
+        <h2>2026-05-03 工作摘要 (2)：音訊引擎重構</h2>
         <ul>
-            <li>完成 <b>Main.cpp</b> 的模組化拆解。</li>
-            <li>建立 <b>Source/HttpServer</b> (h/cpp)：獨立管理 HTTP 通訊與指令解析。</li>
-            <li>建立 <b>Source/MainWindow</b> (h/cpp)：獨立管理 UI 視窗與元件。</li>
-            <li>建立 <b>Framework_API_Index.html</b>：整合 Tracktion Engine, JUCE, Blockly 官方文件索引。</li>
-            <li>更新 <b>GEMINI.md</b>：強制執行「先查證、再實作」的 API 使用流程。</li>
-            <li>設定 <b>VS Code Launch/Tasks</b>：支援 F5 直接執行 <code>npm run dev</code> (UI 專案)。</li>
-            <li>同步更新 <b>AudioEngine_FunctionsTable.html</b>：反映重構後的檔案映射。</li>
+            <li>完成 <b>Main.cpp</b> 模組化拆解，新增 <code>HttpServer</code> 與 <code>MainWindow</code> 模組。</li>
+            <li>修復多項 Tracktion Engine API 變更引起的編譯錯誤（<code>TimePosition</code>, <code>TempoSequence</code>, <code>numUndoLevelsToStore</code>）。</li>
+            <li>解決 <b>執行緒斷言衝突</b>：將 Transport 操作包裝於 <code>MessageManager::callAsync</code> 中。</li>
         </ul>
     </div>
-
+    <div class="card" style="border-left-color: #fbc02d;">
+        <h2>2026-05-03 工作摘要 (3)：測試音實作與挑戰</h2>
+        <ul>
+            <li><span class="status-ok">成功：</span> 引擎初始化通過，不再觸發 ProjectItemID 斷言。</li>
+            <li><span class="status-ok">成功：</span> 前端 Play/Stop 可驅動 C++ 引擎進入播放狀態。</li>
+            <li><span class="status-fail">待解決：</span> 內建插件（toneGenerator, 4osc）建立失敗。</li>
+            <li>原因分析：可能是 <code>ValueTree</code> 屬性或插件字串 ID 在當前子模組版本中有變動。</li>
+        </ul>
+    </div>
 </body>
 </html>

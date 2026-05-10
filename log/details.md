@@ -13,9 +13,16 @@
 - **工具**：使用 HTML 對照表，提供清晰的「功能-檔案-函數」映射。
 
 ### 2. C++ 核心模組化
-- **HttpServer (h/cpp)**：將通訊邏輯從 `Main.cpp` 抽離，封裝 `juce::StreamingSocket` 監聽器。
-- **MainWindow (h/cpp)**：將 UI 佈局與視窗管理抽離，並負責啟動 HttpServer。
-- **Main.cpp**：僅保留 `JUCEApplication` 類別與應用程式 entry point，作為全域生命週期管理。
+- **HttpServer (h/cpp)**：封裝 `juce::StreamingSocket` 監聽器。
+- **MainWindow (h/cpp)**：管理 UI 佈局與 AudioEngine 實例。
+- **AudioEngine (h/cpp)**：封裝 `te::Engine` 與 `te::Edit`，處理 Transport 邏輯。
 
-### 3. 編譯優化
-- 更新 `CMakeLists.txt`，採用明確的 `target_sources` 宣告，便於後續擴充。
+### 3. Tracktion Engine API 修復 (核心)
+- **初始化**：必須顯式設置 `Edit::Options::editProjectItemID` 否則觸發斷言。
+- **執行緒**：Transport 控制（Play/Stop）必須回傳 Message Thread 執行。
+- **類型系統**：新版 TE 使用 `tracktion::TimePosition` 與 `tracktion::BeatPosition` 強型別。
+- **BPM 設定**：透過 `edit->tempoSequence.getTempoAt(TimePosition()).setBpm(value)` 進行。
+
+### 4. 環境配置
+- **VS Code**：`.vscode/launch.json` 配置 `Launch UI (npm dev)`。
+- **知識庫**：建立 `Framework_API_Index.html` 紀錄實測成功的 API Snippets。
