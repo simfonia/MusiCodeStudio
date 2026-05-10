@@ -24,19 +24,26 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('piano');
   const [bpm, setBpm] = useState(120);
   const [isRecording, setIsRecording] = useState(false);
-  
+  const [filterFreq, setFilterFreq] = useState(0.5);
+
   const engine = EngineService.getInstance();
 
   useEffect(() => {
     engine.setBPM(bpm);
   }, [bpm]);
 
+  const handleFilterChange = (val: number) => {
+    setFilterFreq(val);
+    engine.setPluginParameter('4OSC', 'filterFreq', val);
+  };
+
   const handlePlay = () => engine.play();
   const handleStop = () => engine.stop();
 
   return (
     <div id="root">
-      {/* Top Toolbar */}
+      {/* ... rest of toolbar ... */}
+
       <header className="toolbar">
         <div className="logo">MusiCode Studio</div>
         
@@ -83,8 +90,13 @@ function App() {
                 <button className="view-btn" style={{ padding: '2px 6px', fontSize: '10px', color: 'var(--danger)' }}>R</button>
               </div>
             </div>
-            <div style={{ background: 'var(--bg-app)', padding: '6px', borderRadius: '4px', fontSize: '12px', color: 'var(--text-dim)' }}>
-              🎹 VSTi: Serum
+            <div 
+              style={{ background: 'var(--bg-app)', padding: '6px', borderRadius: '4px', fontSize: '12px', color: 'var(--text-dim)', cursor: 'pointer', border: '1px solid transparent' }}
+              onClick={() => engine.showPluginWindow(0)}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
+            >
+              🎹 VSTi: 4OSC (Click to Open)
             </div>
           </div>
           
@@ -138,7 +150,22 @@ function App() {
         {/* Plugin Rack (Right Side) */}
         <aside className="plugin-rack">
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-dim)', marginBottom: '5px' }}>PLUGINS</div>
-          <div className="plugin-slot instrument">🎹 Serum</div>
+          <div className="plugin-slot instrument">🎹 4OSC</div>
+          
+          <div style={{ padding: '10px', background: 'var(--bg-app)', borderRadius: '6px', marginTop: '10px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-dim)', marginBottom: '5px' }}>FILTER CUTOFF ({Math.round(filterFreq * 100)}%)</div>
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.01" 
+              value={filterFreq}
+              style={{ width: '100%', cursor: 'pointer' }}
+              onInput={(e) => handleFilterChange(parseFloat((e.target as HTMLInputElement).value))}
+              onDragStart={(e) => e.preventDefault()} // 防止瀏覽器誤判為拖放操作
+            />
+          </div>
+
           <div className="plugin-slot effect">✨ Reverb</div>
           <div className="plugin-slot empty">+ Add FX</div>
           

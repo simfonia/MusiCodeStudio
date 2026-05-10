@@ -6,7 +6,9 @@
 export type EngineCommand = 
   | { action: 'transport_play' }
   | { action: 'transport_stop' }
-  | { action: 'set_bpm', value: number };
+  | { action: 'set_bpm', value: number }
+  | { action: 'show_plugin_window', track: number }
+  | { action: 'set_plugin_param', pluginName: string, paramID: string, value: number };
 
 export class EngineService {
   private static instance: EngineService;
@@ -57,5 +59,25 @@ export class EngineService {
 
   public setBPM(bpm: number) {
     this.sendCommand({ action: 'set_bpm', value: bpm });
+  }
+
+  public showPluginWindow(trackIndex: number) {
+    this.sendCommand({ action: 'show_plugin_window', track: trackIndex });
+  }
+
+  private lastParamUpdateTimes: Record<string, number> = {};
+  private paramThrottleMs = 32; // 約 30fps
+
+  public setPluginParameter(pluginName: string, paramID: string, value: number) {
+    const key = `${pluginName}_${paramID}`;
+    const now = Date.now();
+    const lastTime = this.lastParamUpdateTimes[key] || 0;
+
+    if (now - lastTime < this.paramThrottleMs) {
+      return; // 節流
+    }
+
+    this.lastParamUpdateTimes[key] = now;
+    this.sendCommand({ action: 'set_plugin_param', pluginName, paramID, value });
   }
 }

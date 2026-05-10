@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>MusiCodeStudio 通訊協議對照表</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f9f7f2; color: #333; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: #fff; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 8px; border-left: 5px solid #d4c5af; }
+        h1 { color: #5d5d5d; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f4f1ea; color: #666; text-transform: uppercase; font-size: 0.9em; }
+        .code { font-family: 'Consolas', monospace; background: #f0f0f0; padding: 2px 5px; border-radius: 4px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MusiCodeStudio 通訊協議 (HTTP/JSON)</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Action 指令</th>
+                    <th>參數結構</th>
+                    <th>功能描述</th>
+                    <th>觸發點 (UI)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="code">transport_play</span></td>
+                    <td>無</td>
+                    <td>啟動播放，若已在結尾則自動重頭播放。</td>
+                    <td>Play 按鈕</td>
+                </tr>
+                <tr>
+                    <td><span class="code">transport_stop</span></td>
+                    <td>無</td>
+                    <td>停止播放，重設指標至 0.0。</td>
+                    <td>Stop 按鈕</td>
+                </tr>
+                <tr>
+                    <td><span class="code">set_bpm</span></td>
+                    <td><span class="code">{ value: number }</span></td>
+                    <td>調整全局 BPM。</td>
+                    <td>BPM 輸入框</td>
+                </tr>
+                <tr>
+                    <td><span class="code">show_plugin_window</span></td>
+                    <td><span class="code">{ track: number }</span></td>
+                    <td>開啟指定音軌的第一個插件原生視窗。</td>
+                    <td>音軌插件插槽</td>
+                </tr>
+                <tr>
+                    <td><span class="code">set_plugin_param</span></td>
+                    <td><span class="code">{ pluginName: string, paramID: string, value: number }</span></td>
+                    <td>實時控制插件參數 (0.0 ~ 1.0)。</td>
+                    <td>插件架滑桿</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

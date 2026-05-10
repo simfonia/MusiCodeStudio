@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>MusiCodeStudio 前端 UI 模組對照表</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f9f7f2; color: #333; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: #fff; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 8px; border-left: 5px solid #d4c5af; }
+        h1 { color: #5d5d5d; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f4f1ea; color: #666; text-transform: uppercase; font-size: 0.9em; }
+        .code { font-family: 'Consolas', monospace; background: #f0f0f0; padding: 2px 5px; border-radius: 4px; font-size: 0.9em; }
+        .tag { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; background: #e8e8e8; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MusiCodeStudio 前端 UI 模組對照表 (React/TS)</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>功能模組</th>
+                    <th>關鍵檔案</th>
+                    <th>核心職責</th>
+                    <th>關鍵函數 / 指令</th>
+                    <th>備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>App Core</b></td>
+                    <td><span class="code">App.tsx</span></td>
+                    <td>主介面佈局、工具列、軌道列表與插件架管理。</td>
+                    <td><span class="code">handlePlay()</span>, <span class="code">handleFilterChange()</span></td>
+                    <td>使用 Lucide-React 圖示集。</td>
+                </tr>
+                <tr>
+                    <td><b>Engine Service</b></td>
+                    <td><span class="code">services/EngineService.ts</span></td>
+                    <td>與 C++ 引擎通訊的單例服務，處理指令發送與節流。</td>
+                    <td><span class="code">sendCommand()</span>, <span class="code">setPluginParameter()</span></td>
+                    <td>實作了 32ms (30fps) 參數節流。</td>
+                </tr>
+                <tr>
+                    <td><b>Piano Roll View</b></td>
+                    <td><span class="code">views/PianoRollView.tsx</span></td>
+                    <td>鋼琴捲軸介面，負責 MIDI 音符的視覺化與編輯。</td>
+                    <td><span class="tag">Coming Soon</span></td>
+                    <td>核心編輯器視圖之一。</td>
+                </tr>
+                <tr>
+                    <td><b>Blockly View</b></td>
+                    <td><span class="code">views/BlocklyView.tsx</span></td>
+                    <td>積木程式介面，負責 DSP 邏輯與合成器架構設計。</td>
+                    <td><span class="tag">In Progress</span></td>
+                    <td>將轉譯為合成器節點 JSON。</td>
+                </tr>
+                <tr>
+                    <td><b>Staff View</b></td>
+                    <td><span class="code">views/StaffView.tsx</span></td>
+                    <td>五線譜樂譜介面。</td>
+                    <td><span class="tag">Coming Soon</span></td>
+                    <td>傳統樂譜編輯功能。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

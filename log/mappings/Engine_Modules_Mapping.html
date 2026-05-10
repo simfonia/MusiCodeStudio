@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>MusiCodeStudio 後端引擎模組對照表</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f9f7f2; color: #333; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: #fff; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 8px; border-left: 5px solid #d4c5af; }
+        h1 { color: #5d5d5d; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f4f1ea; color: #666; text-transform: uppercase; font-size: 0.9em; }
+        .code { font-family: 'Consolas', monospace; background: #f0f0f0; padding: 2px 5px; border-radius: 4px; font-size: 0.9em; }
+        .tag { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; background: #e8e8e8; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MusiCodeStudio 後端引擎模組對照表 (C++)</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>功能模組</th>
+                    <th>關鍵檔案</th>
+                    <th>核心職責</th>
+                    <th>關鍵函數 / API</th>
+                    <th>備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Audio Engine Core</b></td>
+                    <td><span class="code">AudioEngine.cpp/h</span></td>
+                    <td>音訊引擎生命週期、Edit 管理、播放控制。</td>
+                    <td><span class="code">play()</span>, <span class="code">stop()</span>, <span class="code">setupTestScene()</span></td>
+                    <td>封裝 te::Engine 與 te::Edit。</td>
+                </tr>
+                <tr>
+                    <td><b>IPC Server</b></td>
+                    <td><span class="code">HttpServer.cpp/h</span></td>
+                    <td>監聽 Port 9001，處理來自前端的 JSON 指令。</td>
+                    <td><span class="code">registerHandlers()</span>, <span class="code">processCommand()</span></td>
+                    <td>使用 juce::StreamingSocket。</td>
+                </tr>
+                <tr>
+                    <td><b>Plugin Manager</b></td>
+                    <td><span class="code">PluginController.cpp/h</span></td>
+                    <td>管理插件視窗生命週期、參數即時同步。</td>
+                    <td><span class="code">showPluginWindow()</span>, <span class="code">setPluginParameter()</span></td>
+                    <td>處理 4OSC 全域搜尋與 ValueTree 同步。</td>
+                </tr>
+                <tr>
+                    <td><b>Native UI</b></td>
+                    <td><span class="code">MainWindow.cpp/h</span></td>
+                    <td>承載原生視窗與狀態標籤，處理 UIBehaviour 注入。</td>
+                    <td><span class="code">updateStatus()</span></td>
+                    <td>負責將 C++ 狀態反饋至畫面上。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

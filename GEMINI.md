@@ -15,10 +15,22 @@
 
 ### 1.3 操作規範
 - **先查表再動刀**：進行任何修改前，必須先讀取相關的功能對照表，確認影響範圍。
-- **先查證再實作**：涉及外部框架 (Tracktion Engine, JUCE, Blockly 等) 的 API 調用時，必須查閱 `log/mappings/Framework_API_Index.html` 中的官方文件連結。若為新功能，應主動搜尋最新文檔並更新索引。
+- **先查證再實作**：涉及外部框架 (Tracktion Engine, JUCE, Blockly 等) 的 API 調用時，必須**隨時查閱並修正 `log/mappings/Framework_API_Index.html`**。若為新功能，應主動搜尋最新文檔並更新索引；若發現舊有索引錯誤，應立即修正。
 - **完成後匯整**：各功能模組穩定後，視情況匯整為函式庫 (Library)。
 
-## 2. 開發流程規範 (SOP)
+## 2. 核心架構鐵律 (Architecture Mandates)
+### 2.1 插件控制：不依賴索引
+- **動態尋找**：嚴禁依賴 `trackIndex` 或 `pluginIndex` 進行控制。Tracktion 的插件列表在執行時會因為預設插件 (Volume/Pan) 或使用者操作而變動。
+- **名稱/類型匹配**：一律使用 `pluginName` 或 `findFirstPluginOfType<T>` 來定位目標。
+
+### 2.2 參數同步：ValueTree 優先
+- **雙重更新**：更新參數時，應同時呼叫 `setParameter` 並直接修改 `plugin->state.setProperty`。這能確保 DSP 執行緒獲得最穩定的同步。
+- **執行緒限制**：任何涉及 `AutomatableParameter` 或 `ValueTree` 的變更，必須包裹在 `juce::MessageManager::callAsync` 中執行。
+
+### 2.3 前端效能：強制節流
+- **高頻事件**：對於滑桿等高頻事件，前端 `EngineService` 必須實作 30Hz 以上的節流 (Throttling)，防止後端 HTTP 請求堆積導致播放卡頓。
+
+## 3. 開發流程規範 (SOP)
 - **階段性授權執行**：
   - 複雜任務必須拆分為三個階段，各階段需獲得使用者確認後方可繼續：
     1. **研究與提案 (Proposal)**：分析現狀與對照表，提出方案及其優缺點。

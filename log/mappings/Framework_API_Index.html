@@ -107,13 +107,25 @@ options.role = te::Edit::forEditing;
 options.numUndoLevelsToStore = 100;
 
 auto edit = std::make_unique<te::Edit>(options);
+
+// 插件參數控制 (4OSC 範例：結合 ValueTree 與 AutomatableParameter)
+juce::MessageManager::callAsync([plugin, paramID, newValue]() {
+    if (auto param = plugin->getAutomatableParameterByID(paramID)) {
+        float raw = param->valueRange.convertFrom0to1(newValue);
+        // 雙重更新：同步 ValueTree 狀態 (DSP) 並更新參數物件 (UI)
+        plugin->state.setProperty(paramID, raw, nullptr);
+        param->setParameter(raw, juce::sendNotification);
+    }
+});
             </div>
             <div class="note">
                 <b>本專案關鍵點：</b> 
                 <ul>
                     <li><code>te::Edit</code> 必須接收一個有效的 <code>editProjectItemID</code>。</li>
                     <li><code>te::DeviceManager::initialise(inputs, outputs)</code> 必須被調用才能啟動音訊。</li>
-                    <li><b>執行緒規範：</b> 所有 Transport 操作（play, stop, setPosition）必須在 <b>Message Thread</b> 執行。若在背景執行緒（如 HTTP Server）調用，必須使用 <code>juce::MessageManager::callAsync</code> 包裝。</li>
+                    <li><b>執行緒規範：</b> 所有 Transport 操作與參數變更（ValueTree/AutomatableParameter）必須在 <b>Message Thread</b> 執行，否則觸發斷言。</li>
+                    <li><b>插件尋找：</b> 嚴禁依賴索引 (Index)，應全域搜尋 <code>plugin->getName()</code>。</li>
+                    <li><b>4OSC 初始化：</b> 必須手動設定 <code>filterType</code> (預設為 0/Off) 才能啟用濾波器。</li>
                 </ul>
             </div>
         </div>

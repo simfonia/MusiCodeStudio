@@ -29,6 +29,20 @@ void HttpServer::registerHandlers()
         audioEngine.setBpm(bpm);
         updateStatus("MusiCode Engine: BPM -> " + juce::String(bpm, 1), juce::Colours::blue);
     };
+
+    commandHandlers["show_plugin_window"] = [this](const juce::var& params) {
+        int trackIndex = params.getProperty("track", 0);
+        audioEngine.getPluginController().showPluginWindow(trackIndex);
+        updateStatus("Showing Plugin Window (Track " + juce::String(trackIndex) + ")", juce::Colours::cyan);
+    };
+
+    commandHandlers["set_plugin_param"] = [this](const juce::var& params) {
+        juce::String pluginName = params.getProperty("pluginName", "4OSC").toString();
+        juce::String paramID = params.getProperty("paramID", "").toString();
+        float value = params.getProperty("value", 0.5f);
+        
+        audioEngine.setPluginParameter(pluginName, paramID, value);
+    };
 }
 
 void HttpServer::run()
