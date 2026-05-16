@@ -13,8 +13,12 @@ public:
     MainComponent(AudioEngine& engine);
     void resized() override;
     juce::Label& getStatusLabel() { return statusLabel; }
+    
+    // 彈出音訊設定對話框
+    void showAudioSettings();
 
 private:
+    AudioEngine& audioEngine;
     juce::Label statusLabel;
     std::unique_ptr<juce::WebBrowserComponent> webBrowser;
     std::unique_ptr<CommandRouter> router;

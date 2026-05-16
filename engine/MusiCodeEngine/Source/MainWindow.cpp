@@ -2,9 +2,10 @@
 
 //==============================================================================
 MainComponent::MainComponent(AudioEngine& engine)
+    : audioEngine(engine)
 {
     // 1. 初始化狀態標籤
-    statusLabel.setText("MusiCode Engine: Initializing...", juce::dontSendNotification);
+    statusLabel.setText("MusiCodeStudio: Ready", juce::dontSendNotification);
     statusLabel.setFont(juce::Font(16.0f, juce::Font::bold));
     statusLabel.setColour(juce::Label::textColourId, juce::Colours::black);
     statusLabel.setColour(juce::Label::backgroundColourId, juce::Colours::lightgrey.withAlpha(0.5f));
@@ -16,6 +17,9 @@ MainComponent::MainComponent(AudioEngine& engine)
         statusLabel.setText(text, juce::dontSendNotification);
         statusLabel.setColour(juce::Label::textColourId, color);
     });
+
+    // 注入 show_audio_settings 指令處理
+    router->setAudioSettingsCallback([this]() { showAudioSettings(); });
 
     // 3. 初始化 WebView2 瀏覽器 (啟用原生整合)
     webBrowser = std::make_unique<juce::WebBrowserComponent>(
@@ -46,9 +50,35 @@ void MainComponent::resized()
         webBrowser->setBounds(area);
 }
 
+void MainComponent::showAudioSettings()
+{
+    auto selector = std::make_unique<juce::AudioDeviceSelectorComponent>(
+        audioEngine.getEngine().getDeviceManager().deviceManager,
+        1, 256, // 輸入腳位
+        1, 256, // 輸出腳位
+        true,   // 顯示 MIDI 輸入
+        true,   // 顯示 MIDI 輸出
+        true,   // 顯示頻道選擇
+        false   // 隱藏進階選項
+    );
+
+    selector->setSize(500, 450);
+
+    juce::DialogWindow::LaunchOptions options;
+    options.content.setOwned(selector.release());
+    options.dialogTitle = "Audio Settings";
+    options.dialogBackgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
+    options.escapeKeyTriggersCloseButton = true;
+    options.useNativeTitleBar = false; // 關鍵：停用原生標題列，改用 JUCE 自繪標題列，避開座標偏移 Bug
+    options.resizable = false;
+    options.componentToCentreAround = this;
+
+    options.launchAsync();
+}
+
 //==============================================================================
 MainWindow::MainWindow(juce::String name) 
-    : DocumentWindow(name, juce::Colours::white, allButtons)
+    : DocumentWindow("MusiCodeStudio", juce::Colours::white, allButtons)
 {
     setUsingNativeTitleBar(true);
     setResizable(true, true);
@@ -63,8 +93,7 @@ MainWindow::MainWindow(juce::String name)
     // 3. 初始化 HTTP 伺服器 (連回容器內的 Label)
     server = std::make_unique<HttpServer>(mainComponent->getStatusLabel(), *audioEngine);
 
-    setCentreRelative(0.5f, 0.5f);
-    setSize(1280, 800);
+    setFullScreen(true);
     setVisible(true);
 }
 

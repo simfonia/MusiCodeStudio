@@ -36,6 +36,12 @@ void CommandRouter::registerHandlers()
         float value = params.getProperty("value", 0.5f);
         audioEngine.setPluginParameter(pluginName, paramID, value);
     };
+
+    commandHandlers["show_audio_settings"] = [this](const juce::var&) {
+        if (audioSettingsCallback != nullptr)
+            audioSettingsCallback();
+        updateStatus("Opening Audio Settings...", juce::Colours::cyan);
+    };
 }
 
 void CommandRouter::processCommand(const juce::String& jsonString)

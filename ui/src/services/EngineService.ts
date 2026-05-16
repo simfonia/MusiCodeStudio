@@ -10,7 +10,8 @@ export type EngineCommand =
   | { action: 'transport_stop' }
   | { action: 'set_bpm', value: number }
   | { action: 'show_plugin_window', track: number }
-  | { action: 'set_plugin_param', pluginName: string, paramID: string, value: number };
+  | { action: 'set_plugin_param', pluginName: string, paramID: string, value: number }
+  | { action: 'show_audio_settings' };
 
 export class EngineService {
   private static instance: EngineService;
@@ -75,6 +76,10 @@ export class EngineService {
 
   public showPluginWindow(trackIndex: number) {
     this.sendCommand({ action: 'show_plugin_window', track: trackIndex });
+  }
+
+  public showAudioSettings() {
+    this.sendCommand({ action: 'show_audio_settings' });
   }
 
   private lastParamUpdateTimes: Record<string, number> = {};

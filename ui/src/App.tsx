@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Square, 
@@ -8,7 +8,8 @@ import {
   Keyboard, 
   Layout, 
   Waves,
-  Plus
+  Plus,
+  Volume2
 } from 'lucide-react';
 import './App.css';
 
@@ -25,12 +26,25 @@ function App() {
   const [bpm, setBpm] = useState(120);
   const [isRecording, setIsRecording] = useState(false);
   const [filterFreq, setFilterFreq] = useState(0.5);
-
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
   const engine = EngineService.getInstance();
 
   useEffect(() => {
     engine.setBPM(bpm);
   }, [bpm]);
+
+  // 點擊外部關閉選單
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
+        setShowSettingsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleFilterChange = (val: number) => {
     setFilterFreq(val);
@@ -39,6 +53,11 @@ function App() {
 
   const handlePlay = () => engine.play();
   const handleStop = () => engine.stop();
+
+  const handleShowAudioSettings = () => {
+    engine.showAudioSettings();
+    setShowSettingsMenu(false);
+  };
 
   return (
     <div id="root">
@@ -64,7 +83,9 @@ function App() {
               type="number" 
               value={bpm} 
               onChange={(e) => setBpm(Number(e.target.value))}
-              style={{ width: '45px', border: 'none', background: 'none', fontWeight: 600, fontSize: '15px', color: 'var(--accent)' }}
+              style={{ width: '45px', background: 'none', border: 'none', borderBottom: '1px solid transparent', fontWeight: 600, fontSize: '15px', color: 'var(--accent)' }}
+              onFocus={(e) => e.target.style.borderBottomColor = 'var(--accent)'}
+              onBlur={(e) => e.target.style.borderBottomColor = 'transparent'}
             />
           </div>
           <div style={{ fontSize: '14px', color: 'var(--text-dim)' }}>
@@ -72,8 +93,43 @@ function App() {
           </div>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
-          <button className="view-btn"><Settings size={18} /></button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', position: 'relative' }} ref={settingsMenuRef}>
+          <button 
+            className={`view-btn ${showSettingsMenu ? 'active' : ''}`} 
+            onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+          >
+            <Settings size={18} />
+          </button>
+
+          {showSettingsMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: '8px',
+              backgroundColor: 'var(--bg-paper)',
+              border: '1px solid var(--border)',
+              borderRadius: '6px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              zIndex: 1000,
+              minWidth: '180px',
+              overflow: 'hidden'
+            }}>
+              <div 
+                style={{ padding: '10px 15px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                className="dropdown-item"
+                onClick={handleShowAudioSettings}
+              >
+                <Volume2 size={16} /> Audio Settings
+              </div>
+              <div 
+                style={{ padding: '10px 15px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-dim)' }}
+                className="dropdown-item"
+              >
+                <Settings size={16} /> Preferences... (TBD)
+              </div>
+            </div>
+          )}
         </div>
       </header>
 

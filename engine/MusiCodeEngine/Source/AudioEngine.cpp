@@ -5,8 +5,8 @@ AudioEngine::AudioEngine()
 {
     using namespace tracktion_engine;
 
-    // 1. 初始化音訊設備
-    engine.getDeviceManager().initialise(0, 2);
+    // 1. 初始化音訊設備 (修正：請求 2 入 2 出以支援麥克風)
+    engine.getDeviceManager().initialise(2, 2);
 
     // 2. 建立空的 Edit
     auto editState = createEmptyEdit(engine);
