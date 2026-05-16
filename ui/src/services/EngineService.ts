@@ -1,6 +1,8 @@
 /**
  * MusiCodeStudio Engine Service
- * 使用 HTTP POST 指令模式，穩定控制 C++ 引擎
+ * 支援 Hybrid 通訊模式：
+ * 1. Native IPC (WebView2): 極低延遲，適用於積木參數連動。
+ * 2. HTTP POST (Legacy/Fallback): 適用於瀏覽器開發環境。
  */
 
 export type EngineCommand = 
@@ -13,9 +15,11 @@ export type EngineCommand =
 export class EngineService {
   private static instance: EngineService;
   private engineUrl = 'http://127.0.0.1:9001';
+  private isNativeMode = false;
 
   private constructor() {
-    console.log('[EngineService] Initialized in HTTP Mode');
+    this.isNativeMode = typeof (window as any).__JUCE__ !== 'undefined';
+    console.log(`[EngineService] Initialized in ${this.isNativeMode ? 'NATIVE' : 'HTTP'} Mode`);
   }
 
   public static getInstance(): EngineService {
@@ -26,26 +30,34 @@ export class EngineService {
   }
 
   /**
-   * 發送指令到 C++ 引擎 (使用 HTTP POST)
+   * 發送指令到 C++ 引擎 (優先使用 Native IPC，無則降級為 HTTP)
    */
   public async sendCommand(command: EngineCommand) {
-    console.log('[EngineService] Sending Command:', command);
-    
+    if (this.isNativeMode) {
+      try {
+        const juce = (window as any).__JUCE__;
+        if (juce && juce.backend && typeof juce.backend.emitEvent === 'function') {
+          juce.backend.emitEvent("__juce__invoke", {
+            name: "postToBackend",
+            params: [command],
+            resultId: 0
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('[EngineService] Native IPC failed, falling back to HTTP', error);
+      }
+    }
+
     try {
-      const response = await fetch(this.engineUrl, {
+      await fetch(this.engineUrl, {
         method: 'POST',
         mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(command),
       });
-
-      if (response.ok) {
-        // console.log('[EngineService] Command delivered successfully');
-      }
     } catch (error) {
-      console.warn('[EngineService] Engine not reachable. Make sure MusiCodeEngine is running.');
+      // 靜默處理 HTTP 錯誤，避免在離線開發時產生過多 Log
     }
   }
 

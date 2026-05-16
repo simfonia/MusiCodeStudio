@@ -3,46 +3,15 @@
 HttpServer::HttpServer(juce::Label& statusLabel, AudioEngine& engine)
     : juce::Thread("HttpServer"), label(statusLabel), audioEngine(engine)
 {
-    registerHandlers();
+    router = std::make_unique<CommandRouter>(engine, [this](const juce::String& text, juce::Colour color) {
+        updateStatus(text, color);
+    });
     startThread();
 }
 
 HttpServer::~HttpServer()
 {
     stopThread(2000);
-}
-
-void HttpServer::registerHandlers()
-{
-    commandHandlers["transport_play"] = [this](const juce::var&) {
-        audioEngine.play();
-        updateStatus("MusiCode Engine: PLAYING", juce::Colours::green);
-    };
-
-    commandHandlers["transport_stop"] = [this](const juce::var&) {
-        audioEngine.stop();
-        updateStatus("MusiCode Engine: STOPPED", juce::Colours::red);
-    };
-
-    commandHandlers["set_bpm"] = [this](const juce::var& params) {
-        double bpm = params.getProperty("value", 120.0);
-        audioEngine.setBpm(bpm);
-        updateStatus("MusiCode Engine: BPM -> " + juce::String(bpm, 1), juce::Colours::blue);
-    };
-
-    commandHandlers["show_plugin_window"] = [this](const juce::var& params) {
-        int trackIndex = params.getProperty("track", 0);
-        audioEngine.getPluginController().showPluginWindow(trackIndex);
-        updateStatus("Showing Plugin Window (Track " + juce::String(trackIndex) + ")", juce::Colours::cyan);
-    };
-
-    commandHandlers["set_plugin_param"] = [this](const juce::var& params) {
-        juce::String pluginName = params.getProperty("pluginName", "4OSC").toString();
-        juce::String paramID = params.getProperty("paramID", "").toString();
-        float value = params.getProperty("value", 0.5f);
-        
-        audioEngine.setPluginParameter(pluginName, paramID, value);
-    };
 }
 
 void HttpServer::run()
@@ -84,13 +53,7 @@ void HttpServer::handleRequest(juce::StreamingSocket* client)
         if (bodyStart != -1)
         {
             juce::String jsonBody = request.substring(bodyStart);
-            processCommand(jsonBody);
-        }
-        else
-        {
-            // 向後相容舊的字串指令 (測試用)
-            if (request.contains("transport_play")) processCommand("{\"action\":\"transport_play\"}");
-            else if (request.contains("transport_stop")) processCommand("{\"action\":\"transport_stop\"}");
+            router->processCommand(jsonBody);
         }
 
         // 統一回應 (包含 CORS 標頭)
@@ -104,25 +67,6 @@ void HttpServer::handleRequest(juce::StreamingSocket* client)
             "Connection: close\r\n\r\nOK";
 
         client->write(response.toRawUTF8(), response.getNumBytesAsUTF8());
-    }
-}
-
-void HttpServer::processCommand(const juce::String& jsonString)
-{
-    auto json = juce::JSON::parse(jsonString);
-    if (json.isObject())
-    {
-        auto action = json.getProperty("action", "").toString();
-        
-        auto it = commandHandlers.find(action);
-        if (it != commandHandlers.end())
-        {
-            it->second(json);
-        }
-        else
-        {
-            updateStatus("Unknown Action: [" + action + "]", juce::Colours::orange);
-        }
     }
 }
 

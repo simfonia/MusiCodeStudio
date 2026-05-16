@@ -43,6 +43,13 @@
                     <td>使用 juce::StreamingSocket。</td>
                 </tr>
                 <tr>
+                    <td><b>IPC Routing</b></td>
+                    <td><span class="code">CommandRouter.cpp/h</span></td>
+                    <td>解析 JSON 指令並分發至 AudioEngine。</td>
+                    <td><span class="code">processCommand()</span></td>
+                    <td>實現代碼重用，支援 HTTP 與 Native IPC。</td>
+                </tr>
+                <tr>
                     <td><b>Plugin Manager</b></td>
                     <td><span class="code">PluginController.cpp/h</span></td>
                     <td>管理插件視窗生命週期、參數即時同步。</td>
@@ -50,11 +57,11 @@
                     <td>處理 4OSC 全域搜尋與 ValueTree 同步。</td>
                 </tr>
                 <tr>
-                    <td><b>Native UI</b></td>
-                    <td><span class="code">MainWindow.cpp/h</span></td>
-                    <td>承載原生視窗與狀態標籤，處理 UIBehaviour 注入。</td>
-                    <td><span class="code">updateStatus()</span></td>
-                    <td>負責將 C++ 狀態反饋至畫面上。</td>
+                    <td><b>Native / Web UI</b></td>
+                    <td><span class="code">MainWindow.cpp/h</span>, <span class="code">MainComponent</span></td>
+                    <td>承載原生視窗與 WebView2，處理 UI 與音訊初始化。</td>
+                    <td><span class="code">setContentOwned()</span>, <span class="code">postToBackend</span></td>
+                    <td>整合 Native IPC (Hybrid 模式)。</td>
                 </tr>
             </tbody>
         </table>

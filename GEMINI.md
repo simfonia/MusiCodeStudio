@@ -47,7 +47,3 @@
   - 使用 HTTP POST (Port 9001) 進行 IPC 指令傳遞。
   - C++ 端需處理 CORS `OPTIONS` 預檢請求。
 - **視覺風格**：Studio Paper (淺色、紙張感、Color-coded)。
-
-## 3. 日誌與文件
-- 遵循全域 `GEMINI.md` 的追加原則，嚴禁覆蓋 `log/` 下的歷史紀錄。
-- 每次重大變更後，更新 `log/todo.md` 與當日工作日誌。
