@@ -57,6 +57,13 @@
                     <td>處理 4OSC 全域搜尋與 ValueTree 同步。</td>
                 </tr>
                 <tr>
+                    <td><b>MIDI Controller</b></td>
+                    <td><span class="code">MidiController.cpp/h</span></td>
+                    <td>MIDI 設備掃描、軌道路由與即時訊號監控。</td>
+                    <td><span class="code">getMidiInputsAsJson()</span>, <span class="code">setTrackInput()</span>, <span class="code">timerCallback()</span></td>
+                    <td>實現「五步驟順序」路由與 30Hz 訊號回傳。</td>
+                </tr>
+                <tr>
                     <td><b>Native / Web UI</b></td>
                     <td><span class="code">MainWindow.cpp/h</span>, <span class="code">MainComponent</span></td>
                     <td>承載原生視窗與 WebView2，處理 UI 與音訊初始化。</td>

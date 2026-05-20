@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>MusiCodeStudio MIDI 控制器模組對照表</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #fdfaf0; color: #333; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border: 1px solid #e0dcd0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h1 { color: #d44; border-bottom: 2px solid #d44; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #e0dcd0; padding: 12px; text-align: left; }
+        th { background-color: #ece8d9; font-weight: 600; }
+        .code { font-family: 'Consolas', monospace; background: #f4f1e6; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MidiController 模組對照表</h1>
+        <p>本模組負責全域 MIDI 設備管理、訊號監控與音軌路由，遵循 TE_Cookbook 規範。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>功能</th>
+                    <th>實作函數</th>
+                    <th>通訊指令 / 事件</th>
+                    <th>備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>設備掃描</b></td>
+                    <td><span class="code">refreshDevices()</span></td>
+                    <td>N/A</td>
+                    <td>同步 JUCE 與 TE 設備清單，強制開啟 Monitor Mode。</td>
+                </tr>
+                <tr>
+                    <td><b>清單獲取</b></td>
+                    <td><span class="code">getMidiInputsAsJson()</span></td>
+                    <td><span class="code">get_midi_inputs</span></td>
+                    <td>回傳目前所有啟用的實體 MIDI 設備。</td>
+                </tr>
+                <tr>
+                    <td><b>音軌路由</b></td>
+                    <td><span class="code">setTrackInput()</span></td>
+                    <td><span class="code">set_track_input</span></td>
+                    <td>執行「五步驟路由」：Context -> Instance -> Target -> RecEnabled。</td>
+                </tr>
+                <tr>
+                    <td><b>訊號監控</b></td>
+                    <td><span class="code">handleIncomingMidiMessage()</span></td>
+                    <td><span class="code">midi_signal</span> (Event)</td>
+                    <td>30Hz 高頻推送，直接向 JUCE 註冊以確保低延遲與力度精確。</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>技術深挖：雙重更新同步模式 (Dual Update Pattern)</h2>
+        <p>針對 Tracktion 內建插件（如 4OSC），為了解決 0-1 標準化數值與內部 Hz 數值的衝突，採用以下開發模式：</p>
+        <ul>
+            <li><b>第一重：</b> 呼叫 <span class="code">param->setParameter()</span> 以更新處理鏈與 UI。</li>
+            <li><b>第二重：</b> 呼叫 <span class="code">plugin->state.setProperty()</span> 進行持久化，確保狀態正確寫入 ValueTree。</li>
+            <li><b>回退：</b> 若參數不屬於 AutomatableParameter，直接寫入 ValueTree。</li>
+        </ul>
+    </div>
+</body>
+</html>

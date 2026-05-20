@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Tracktion Engine (TE) 開發手冊 - MusiCode Studio</title>
+    <style>
+        :root {
+            --paper-bg: #fdfaf0;
+            --paper-line: #e0dcd0;
+            --text-main: #333;
+            --accent: #d44;
+            --code-bg: #f4f1e6;
+            --header-bg: #ece8d9;
+        }
+        body {
+            background-color: var(--paper-bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            border: 1px solid var(--paper-line);
+            padding: 40px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
+            background-size: 100% 2em;
+        }
+        h1, h2, h3 {
+            color: var(--accent);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        th, td {
+            border: 1px solid var(--paper-line);
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: var(--header-bg);
+        }
+        code {
+            background-color: var(--code-bg);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+        }
+        pre {
+            background-color: var(--code-bg);
+            padding: 15px;
+            overflow-x: auto;
+            border-left: 5px solid var(--accent);
+            font-family: 'Consolas', monospace;
+        }
+        .pitfall {
+            background-color: #ffe6e6;
+            border: 1px solid #ffcccc;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .pitfall::before {
+            content: "⚠️ Pitfall Alert: ";
+            font-weight: bold;
+            color: #d00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tracktion Engine (TE) 開發手冊</h1>
+        <p>本文檔粹取自 <code>engine/tracktion_engine/examples</code>，旨在提供 MusiCode Studio 開發所需的正確 API 呼叫模式與架構知識。</p>
+
+        <h2>1. 核心觀念 (Core Concepts)</h2>
+        <ul>
+            <li><strong>Engine</strong>: 全域單例，管理所有設備與資源。</li>
+            <li><strong>Edit</strong>: 代表一個專案（Song/Session），包含所有軌道、Clip 與狀態。</li>
+            <li><strong>Transport</strong>: 控制播放、停止、錄音與時間指標。</li>
+            <li><strong>Track</strong>: 軌道，可分為 AudioTrack (含 MIDI) 與其它類型。</li>
+        </ul>
+
+        <h2>2. MIDI 處理與即時監聽 (Midi & Live Monitoring)</h2>
+        <p>這是最容易出錯的部分。若順序錯誤，即便程式碼看起來正確也會靜音。</p>
+        
+        <div class="pitfall" style="background-color: #eef; border-color: #aac;">
+            <strong>關鍵順序 (Order of Operations)</strong>：必須先分配播放上下文 (Context)，輸入設備的「實例 (Instance)」才會被建立。若在分配上下文前呼叫 <code>getAllInputDevices()</code>，將得到空列表。
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>步驟</th>
+                    <th>關鍵 API / 邏輯</th>
+                    <th>說明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1. 啟用設備</td>
+                    <td><code>dm.deviceManager.setMidiInputDeviceEnabled(id, true)</code></td>
+                    <td>在 JUCE 層級啟用實體設備。</td>
+                </tr>
+                <tr>
+                    <td>2. 同步 TE</td>
+                    <td><code>dm.rescanMidiDeviceList()</code></td>
+                    <td>讓 Tracktion Engine 重新掃描並封裝設備。</td>
+                </tr>
+                <tr>
+                    <td>3. 建立上下文</td>
+                    <td><code>edit->getTransport().ensureContextAllocated()</code></td>
+                    <td><strong>最重要！</strong> 此時 TE 才會為 Edit 建立輸入實例。</td>
+                </tr>
+                <tr>
+                    <td>4. 執行路由</td>
+                    <td><code>instance->setTarget(...)</code></td>
+                    <td>獲取 <code>getAllInputDevices()</code> 實例並指向軌道。</td>
+                </tr>
+                <tr>
+                    <td>5. 開啟監聽</td>
+                    <td><code>instance->setRecordingEnabled(trackID, true)</code></td>
+                    <td>必須開啟此開關，訊號才會流過軌道。</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>驗證成功的程式碼模板 (Verified Pattern)</h3>
+        <pre>
+// 1. 確保設備在 JUCE 層已開啟
+auto& dm = engine.getDeviceManager();
+for (auto& dev : juce::MidiInput::getAvailableDevices())
+    dm.deviceManager.setMidiInputDeviceEnabled (dev.identifier, true);
+dm.rescanMidiDeviceList();
+
+// 2. 準備上下文
+edit->getTransport().ensureContextAllocated();
+
+// 3. 掃描實例並路由
+for (auto instance : edit->getAllInputDevices())
+{
+    if (instance->getInputDevice().getDeviceType() == te::InputDevice::physicalMidiDevice)
+    {
+        instance->setTarget (track->itemID, true, &edit->getUndoManager(), 0);
+        instance->setRecordingEnabled (track->itemID, true); // 監聽必備
+        
+        // 診斷監聽狀態
+        if (instance->isLivePlayEnabled (*track))
+            DBG("Monitoring ACTIVE");
+    }
+}</pre>
+
+        <h2>3. 播放與傳輸 (Playback & Transport)</h2>
+        <p>控制播放狀態的正確方式：</p>
+        <pre>
+auto& transport = edit->getTransport();
+if (transport.isPlaying())
+    transport.stop(false, false);
+else
+    transport.play(false);</pre>
+        <div class="pitfall">
+            <code>play(false)</code> 中的 <code>false</code> 代表不使用回溯 (no looping / no rewind to start)。
+        </div>
+
+        <h2>4. 插件管理 (Plugins)</h2>
+        <p>TE 插件不應依賴索引，應使用類型或名稱尋找。</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>任務</th>
+                    <th>推薦做法</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>尋找特定插件</td>
+                    <td><code>track->pluginList.findFirstPluginOfType&lt;T&gt;()</code></td>
+                </tr>
+                <tr>
+                    <td>建立新插件</td>
+                    <td><code>edit->getPluginCache().createNewPlugin(type, state)</code></td>
+                </tr>
+                <tr>
+                    <td>同步參數 (UI -> DSP)</td>
+                    <td><code>parameter->setParameter(val, sendNotification)</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="pitfall">
+            任何涉及 <code>ValueTree</code> 或 <code>Edit</code> 狀態的變更，若不在 UI 執行緒，必須使用 <code>juce::MessageManager::callAsync</code> 包裹。
+        </div>
+
+        <h2>5. 診斷與調試 (Diagnostics)</h2>
+        <ul>
+            <li>使用 <code>edit->getTransport().ensureContextAllocated()</code> 確保音訊上下文已建立。</li>
+            <li>檢查 <code>instance->isLivePlayEnabled(*track)</code> 確認監聽是否真正生效。</li>
+        </ul>
+    </div>
+</body>
+</html>

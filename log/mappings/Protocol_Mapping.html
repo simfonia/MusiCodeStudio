@@ -54,7 +54,19 @@
                     <td><span class="code">set_plugin_param</span></td>
                     <td><span class="code">{ pluginName: string, paramID: string, value: number }</span></td>
                     <td>實時控制插件參數 (0.0 ~ 1.0)。</td>
-                    <td>插件架滑桿</td>
+                    <td>插件架滑桿 / Blockly 積木</td>
+                </tr>
+                <tr>
+                    <td><span class="code">set_track_input</span></td>
+                    <td><span class="code">{ track: number, sourceType: string }</span></td>
+                    <td>設置音軌輸入源 ("MIDI", "MIC", "NONE")。</td>
+                    <td>音軌頭輸入選擇器</td>
+                </tr>
+                <tr>
+                    <td><span class="code">show_audio_settings</span></td>
+                    <td>無</td>
+                    <td>開啟 JUCE 原生音訊設備選擇對話框。</td>
+                    <td>Toolbar 齒輪選單</td>
                 </tr>
             </tbody>
         </table>

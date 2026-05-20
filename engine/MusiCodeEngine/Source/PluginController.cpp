@@ -26,7 +26,10 @@ void PluginController::setPluginParameter(juce::String pluginNameMatch, juce::St
         {
             for (auto p : audioTrack->pluginList)
             {
-                if (p->getName().containsIgnoreCase(pluginNameMatch))
+                // 同時檢查內部名稱與顯示名稱
+                if (p->getName().containsIgnoreCase(pluginNameMatch) || 
+                    p->getShortName(256).containsIgnoreCase(pluginNameMatch) ||
+                    pluginNameMatch.containsIgnoreCase(p->getName()))
                 {
                     targetPlugin = p;
                     break;
@@ -39,14 +42,32 @@ void PluginController::setPluginParameter(juce::String pluginNameMatch, juce::St
         {
             if (auto param = targetPlugin->getAutomatableParameterByID(paramID))
             {
+                // 執行範圍轉換：從 0.0~1.0 映射到插件原始範圍 (例如 Pitch: 0~135)
                 float rawValue = param->valueRange.convertFrom0to1(newValue);
-                
-                // 直接更新 ValueTree State (最高優先級，DSP 同步最穩定)
-                targetPlugin->state.setProperty(paramID, rawValue, nullptr);
 
-                // 同步更新參數物件（不使用 Gesture 避免併發 Assertion）
+                juce::String trackInfo = "Unknown Track";
+                if (auto* t = targetPlugin->getOwnerTrack())
+                    trackInfo = t->getName() + " (ID: " + t->itemID.toString() + ")";
+
+                DBG("DUAL UPDATE [" + paramID + "] -> RAW: " + juce::String(rawValue, 2) + " | Track: " + trackInfo);
+                
+                // 1. 更新參數物件 (處理鏈同步)
                 param->setParameter(rawValue, juce::sendNotification);
+                
+                // 2. 更新 ValueTree 屬性 (持久化同步)
+                targetPlugin->state.setProperty(paramID, rawValue, nullptr);
             }
+            else
+            {
+                // 回退機制：如果找不到對應的參數物件，嘗試直接更新 ValueTree 屬性
+                // 這適用於像 filterType 這種 CachedValue 屬性
+                DBG("FALLBACK UPDATE [" + paramID + "] -> " + juce::String(newValue, 2));
+                targetPlugin->state.setProperty(paramID, newValue, nullptr);
+            }
+        }
+        else
+        {
+            DBG("Plugin NOT FOUND matching: " + pluginNameMatch);
         }
     });
 }

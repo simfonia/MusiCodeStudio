@@ -108,24 +108,31 @@ options.numUndoLevelsToStore = 100;
 
 auto edit = std::make_unique<te::Edit>(options);
 
-// 插件參數控制 (4OSC 範例：結合 ValueTree 與 AutomatableParameter)
+// 雙重更新同步模式 (Dual Update Pattern) - 解決 4OSC Hz vs 0-1 衝突
 juce::MessageManager::callAsync([plugin, paramID, newValue]() {
     if (auto param = plugin->getAutomatableParameterByID(paramID)) {
         float raw = param->valueRange.convertFrom0to1(newValue);
-        // 雙重更新：同步 ValueTree 狀態 (DSP) 並更新參數物件 (UI)
-        plugin->state.setProperty(paramID, raw, nullptr);
         param->setParameter(raw, juce::sendNotification);
+        plugin->state.setProperty(paramID, raw, nullptr); // 持久化同步
+    } else {
+        plugin->state.setProperty(paramID, newValue, nullptr); // 回退機制
     }
 });
+
+// 直接 MIDI 監聽回呼 (Direct Callback) - 確保力度精確度
+void handleIncomingMidiMessage (juce::MidiInput* source, const juce::MidiMessage& message) {
+    if (message.isNoteOn()) {
+        float level = message.getVelocity() / 127.0f;
+        // 推送到前端...
+    }
+}
             </div>
             <div class="note">
                 <b>本專案關鍵點：</b> 
                 <ul>
-                    <li><code>te::Edit</code> 必須接收一個有效的 <code>editProjectItemID</code>。</li>
-                    <li><code>te::DeviceManager::initialise(inputs, outputs)</code> 必須被調用才能啟動音訊。</li>
-                    <li><b>執行緒規範：</b> 所有 Transport 操作與參數變更（ValueTree/AutomatableParameter）必須在 <b>Message Thread</b> 執行，否則觸發斷言。</li>
-                    <li><b>插件尋找：</b> 嚴禁依賴索引 (Index)，應全域搜尋 <code>plugin->getName()</code>。</li>
-                    <li><b>4OSC 初始化：</b> 必須手動設定 <code>filterType</code> (預設為 0/Off) 才能啟用濾波器。</li>
+                    <li><b>初始化順序：</b> 必須先呼叫 <code>ensureContextAllocated()</code>，否則無法獲取有效的 <code>InputDeviceInstance</code>。</li>
+                    <li><b>濾波器陷阱：</b> 直接將 0-1 寫入 4OSC 的 <code>filterFreq</code> 會被視為 Hz，導致靜音。必須進行範圍轉換。</li>
+                    <li><b>設備開啟：</b> 必須在 JUCE 層級明確 <code>setMidiInputDeviceEnabled(true)</code> 並註冊回呼，訊號才不會漏失。</li>
                 </ul>
             </div>
         </div>

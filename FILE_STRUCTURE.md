@@ -25,11 +25,18 @@
     ├── tasks.json (新增：npm 指令任務)
     ├── launch.json (新增：F5 啟動 UI 配置)
 
-## [2026-05-16 更新]
-- CMakeLists.txt (更新：連結 juce_gui_extra, 整合 WebView2 SDK)
-- Source/CommandRouter.h/cpp (新增：模組化指令路由)
-- Source/MainWindow.h/cpp (重構：引入 MainComponent 與音訊優先初始化)
-- Source/HttpServer.h/cpp (重構：委託 CommandRouter 處裡指令)
-- ui/src/services/EngineService.ts (更新：實作 Hybrid Native IPC 模式)
-- log/work/2026-05-16.md (更新：記錄手術式重構與 Native IPC 實作細節)
-- log/mappings/Engine_Modules_Mapping.html (更新：加入 CommandRouter 與 Hybrid UI 說明)
+## [2026-05-17 更新]
+- engine/MusiCodeEngine/Source/
+    - MidiController.cpp/h (新增：獨立 MIDI 管理與訊號監控模組)
+    - PluginController.cpp/h (新增：插件生命週期與視圖管理)
+    - CommandRouter.cpp/h (更新：整合 MIDI 指令與事件推送)
+    - MainWindow.cpp/h (更新：整合 WebView2 與 MIDI 事件橋接)
+- ui/src/
+    - components/ (新增：模組化 UI 組件目錄)
+        - TrackHeader.tsx (新增：仿 Waveform 軌道頭，含 MIDI 指示燈)
+        - TrackList.tsx (新增：軌道管理佈局)
+        - Toolbar.tsx (新增：頂部傳輸控制模組)
+        - PluginRack.tsx (新增：右側插件控制鏈)
+    - App.tsx (重構：全面組件化，提升可維護性)
+- docs/TE_Cookbook.html (新增：Tracktion Engine 最佳實作指南)
+- log/todo.md (更新：標註前端重構與 MIDI 監控完成)

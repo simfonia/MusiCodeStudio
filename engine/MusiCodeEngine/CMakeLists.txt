@@ -31,6 +31,8 @@ target_sources(MusiCodeEngine PRIVATE
     Source/AudioEngine.cpp
     Source/PluginController.h
     Source/PluginController.cpp
+    Source/MidiController.h
+    Source/MidiController.cpp
 )
 
 # 連結模組

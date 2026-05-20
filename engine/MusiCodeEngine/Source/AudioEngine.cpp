@@ -1,14 +1,15 @@
 #include "AudioEngine.h"
+#include <iostream>
+
+namespace te = tracktion_engine;
 
 AudioEngine::AudioEngine()
     : engine ("MusiCodeEngine", std::make_unique<MusiCodeUIBehaviour>(), nullptr)
 {
     using namespace tracktion_engine;
 
-    // 1. 初始化音訊設備 (修正：請求 2 入 2 出以支援麥克風)
     engine.getDeviceManager().initialise(2, 2);
 
-    // 2. 建立空的 Edit
     auto editState = createEmptyEdit(engine);
     auto id = ProjectItemID::fromProperty(editState, IDs::projectID);
     if (!id.isValid()) id = ProjectItemID::createNewID(0);
@@ -21,43 +22,80 @@ AudioEngine::AudioEngine()
 
     edit = std::make_unique<Edit>(options);
 
-    // 3. 初始化插件控制器
     pluginController = std::make_unique<PluginController>(*edit, engine);
+    midiController = std::make_unique<MidiController>(*edit, engine);
 
-    // 4. 建立初始測試場景
     setupTestScene();
 }
 
 void AudioEngine::setupTestScene()
 {
     using namespace tracktion_engine;
+    DBG("setupTestScene: Starting...");
     
-    auto track = edit->insertNewTrack(TrackInsertPoint::getEndOfTracks(*edit), IDs::TRACK, nullptr);
-    if (auto audioTrack = dynamic_cast<AudioTrack*>(track.get()))
+    edit->getTransport().ensureContextAllocated();
+
+    // --- 修正：優先使用現有軌道，避免 Index 偏移 ---
+    auto audioTracks = getAudioTracks(*edit);
+    AudioTrack* audioTrack = nullptr;
+
+    if (audioTracks.size() > 0)
     {
-        // 建立 4osc 並開啟濾波器
+        audioTrack = audioTracks[0];
+        DBG("setupTestScene: Reusing existing Track 0 | ID: " + audioTrack->itemID.toString());
+    }
+    else
+    {
+        auto track = edit->insertNewTrack(TrackInsertPoint::getEndOfTracks(*edit), "TRACK", nullptr);
+        audioTrack = dynamic_cast<AudioTrack*>(track.get());
+        if (audioTrack) DBG("setupTestScene: Created new Track 0 | ID: " + audioTrack->itemID.toString());
+    }
+
+    if (audioTrack != nullptr)
+    {
+        audioTrack->setName("MusiCode Main Track");
+
+        // 確保 4OSC 真的被加入
+        while (auto p = audioTrack->pluginList.findFirstPluginOfType<FourOscPlugin>())
+            p->removeFromParent();
+
         auto newPlugin = edit->getPluginCache().createNewPlugin (FourOscPlugin::xmlTypeName, {});
         if (newPlugin != nullptr)
         {
             audioTrack->pluginList.insertPlugin (newPlugin, 0, nullptr);
+            newPlugin->setEnabled(true);
+            
+            // --- 核心修正：同時設定 ValueTree 屬性與 AutomatableParameter ---
+            // 4OSC waveShape: 0=Sine, 1=Tri, 2=Pulse, 3=Saw
+            newPlugin->state.setProperty("waveShape1", 3, nullptr);
+            newPlugin->state.setProperty("filterType", 1, nullptr); // LP
+            newPlugin->state.setProperty("osc1Gain", 1.0f, nullptr);
 
-            juce::ValueTree patch ("PLUGIN");
-            patch.setProperty ("waveShape1", 3, nullptr); 
-            patch.setProperty ("filterType", 1, nullptr);      // LP
-            patch.setProperty ("filterSlope", 12, nullptr);
-            patch.setProperty ("filterFreq", 69.0f, nullptr); 
-            patch.setProperty ("filterResonance", 50.0f, nullptr);
-            patch.setProperty ("filterAmount", 0.0f, nullptr);
-            newPlugin->restorePluginStateFromValueTree(patch);
+            auto setP = [&](const char* id, float val) {
+                if (auto p = newPlugin->getAutomatableParameterByID (id))
+                    p->setParameter (p->valueRange.convertFrom0to1(val), juce::sendNotification);
+            };
+
+            setP ("filterFreq", 0.8f); 
+            setP ("filterResonance", 0.5f);
+            setP ("gain", 0.8f);
+
+            DBG("setupTestScene: 4OSC Initialized (Sawtooth + Dual Sync)");
         }
-        
-        // 建立長音 MIDI Clip
+
+        // --- 補回 MIDI Clip 建立 (解決 Play 無聲) ---
         auto clip = audioTrack->insertMIDIClip({ tracktion::TimePosition::fromSeconds(0.0), tracktion::TimePosition::fromSeconds(60.0) }, nullptr);
         if (auto midiClip = dynamic_cast<MidiClip*>(clip.get()))
         {
-            midiClip->getSequence().addNote(60, tracktion::BeatPosition::fromBeats(0.0), tracktion::BeatDuration::fromBeats(100.0), 100, 0, nullptr);
+            // 加入一連串長音
+            midiClip->getSequence().addNote(60, tracktion::BeatPosition::fromBeats(0.0), tracktion::BeatDuration::fromBeats(4.0), 100, 0, nullptr);
+            midiClip->getSequence().addNote(64, tracktion::BeatPosition::fromBeats(4.0), tracktion::BeatDuration::fromBeats(4.0), 100, 0, nullptr);
+            midiClip->getSequence().addNote(67, tracktion::BeatPosition::fromBeats(8.0), tracktion::BeatDuration::fromBeats(4.0), 100, 0, nullptr);
+            DBG("setupTestScene: MIDI Test Clip Created");
         }
     }
+    
+    edit->getTransport().setPosition(tracktion::TimePosition::fromSeconds(0.0));
 }
 
 AudioEngine::~AudioEngine()
@@ -67,15 +105,12 @@ AudioEngine::~AudioEngine()
 
 void AudioEngine::play()
 {
-    // Tracktion Engine 要求 Transport 操作必須在 Message Thread
     juce::MessageManager::callAsync([this]() {
         if (edit != nullptr)
         {
             auto& transport = edit->getTransport();
-            // 如果已經在最後，先回到起點 (將 TimeDuration 轉為 TimePosition 進行比較)
             if (transport.getPosition() >= tracktion::toPosition(edit->getLength()))
                 transport.setPosition(tracktion::TimePosition::fromSeconds(0.0));
-            
             transport.play(false);
         }
     });
@@ -101,18 +136,13 @@ bool AudioEngine::isPlaying() const
 void AudioEngine::setBpm(double newBpm)
 {
     if (edit != nullptr)
-    {
-        // Tracktion Engine 的 BPM 設置通常透過 TempoSequence
-        auto& tempoSequence = edit->tempoSequence;
-        tempoSequence.getTempoAt(tracktion::TimePosition()).setBpm(newBpm);
-    }
+        edit->tempoSequence.getTempoAt(tracktion::TimePosition()).setBpm(newBpm);
 }
 
 double AudioEngine::getBpm() const
 {
     if (edit != nullptr)
         return edit->tempoSequence.getTempoAt(tracktion::TimePosition()).getBpm();
-    
     return 120.0;
 }
 
@@ -121,5 +151,3 @@ void AudioEngine::setPluginParameter(juce::String pluginName, juce::String param
     if (pluginController != nullptr)
         pluginController->setPluginParameter(pluginName, paramID, newValue);
 }
-
-

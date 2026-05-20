@@ -11,7 +11,9 @@ export type EngineCommand =
   | { action: 'set_bpm', value: number }
   | { action: 'show_plugin_window', track: number }
   | { action: 'set_plugin_param', pluginName: string, paramID: string, value: number }
-  | { action: 'show_audio_settings' };
+  | { action: 'show_audio_settings' }
+  | { action: 'get_midi_inputs' }
+  | { action: 'set_track_input', trackIndex: number, deviceName: string };
 
 export class EngineService {
   private static instance: EngineService;
@@ -21,6 +23,22 @@ export class EngineService {
   private constructor() {
     this.isNativeMode = typeof (window as any).__JUCE__ !== 'undefined';
     console.log(`[EngineService] Initialized in ${this.isNativeMode ? 'NATIVE' : 'HTTP'} Mode`);
+
+    // 監聽來自 C++ 的事件
+    window.addEventListener('MusiCodeEngineEvent' as any, (event: CustomEvent) => {
+      this.handleEngineEvent(event.detail);
+    });
+  }
+
+  private handleEngineEvent(event: { type: string, detail: any }) {
+    console.log(`[EngineService] Received Event: ${event.type}`, event.detail);
+    
+    // 這裡可以觸發自定義的回呼或 RxJS Subject
+    if (event.type === 'midi_signal') {
+      window.dispatchEvent(new CustomEvent('MusiCode_MidiSignal', { detail: event.detail }));
+    } else if (event.type === 'midi_inputs_list') {
+      window.dispatchEvent(new CustomEvent('MusiCode_MidiInputsList', { detail: event.detail }));
+    }
   }
 
   public static getInstance(): EngineService {
@@ -80,6 +98,14 @@ export class EngineService {
 
   public showAudioSettings() {
     this.sendCommand({ action: 'show_audio_settings' });
+  }
+
+  public getMidiInputs() {
+    this.sendCommand({ action: 'get_midi_inputs' });
+  }
+
+  public setTrackInput(trackIndex: number, deviceName: string) {
+    this.sendCommand({ action: 'set_track_input', trackIndex, deviceName });
   }
 
   private lastParamUpdateTimes: Record<string, number> = {};

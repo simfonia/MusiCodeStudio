@@ -15,7 +15,10 @@
 
 ### 1.3 操作規範
 - **先查表再動刀**：進行任何修改前，必須先讀取相關的功能對照表，確認影響範圍。
-- **先查證再實作**：涉及外部框架 (Tracktion Engine, JUCE, Blockly 等) 的 API 調用時，必須**隨時查閱並修正 `log/mappings/Framework_API_Index.html`**。若為新功能，應主動搜尋最新文檔並更新索引；若發現舊有索引錯誤，應立即修正。
+- **先查證再實作**：涉及外部框架 (Tracktion Engine, JUCE, Blockly 等) 的 API 調用時，必須**強制查閱**以下文件：
+    - **`docs/TE_Cookbook.html`**：粹取自官方範例的最佳實作模式 (Best Practices)。
+    - **`log/mappings/Framework_API_Index.html`**：框架 API 的關鍵參數與診斷索引。
+- **異動即更新**：若為新功能，應主動搜尋最新文檔並更新索引；若發現舊有索引錯誤，應立即修正。
 - **完成後匯整**：各功能模組穩定後，視情況匯整為函式庫 (Library)。
 
 ## 2. 核心架構鐵律 (Architecture Mandates)

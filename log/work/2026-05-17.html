@@ -1,0 +1,53 @@
+<h3>技術深挖 (Technical Deep Dive) - MIDI 靜音與重構專題</h3>
+<ul>
+    <li><b>問題解決：MIDI 靜音終結</b>
+        <ul>
+            <li><b>根本原因：</b>初始化順序錯誤。在 <code>ensureContextAllocated()</code> 呼叫前，<code>InputDeviceInstance</code> 尚未建立，導致路由無效。</li>
+            <li><b>API 修正：</b>
+                <ul>
+                    <li><code>te::isOnTargetTrack</code> 為獨立函數而非成員函數。</li>
+                    <li>存取 <code>keyboardState</code> 需將 <code>InputDevice</code> 轉型為 <code>MidiInputDevice</code>。</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><b>前端重構：Studio Paper 模組化</b>
+        <ul>
+            <li><b>策略：</b>將 <code>App.tsx</code> 拆分為 <code>Toolbar</code>, <code>TrackList</code>, <code>TrackHeader</code>, <code>PluginRack</code>。</li>
+            <li><b>即時監控：</b>利用 <code>MusiCodeEngineEvent</code> 橋接，實現 30Hz MIDI 訊號燈，完全解耦 UI 與引擎細節。</li>
+        </ul>
+    </li>
+    <li><b>JS 橋接相容性：</b>
+        <ul>
+            <li><b>現象：</b><code>juce::WebBrowserComponent</code> 缺少 <code>executeJavaScript</code>。</li>
+            <li><b>方案：</b>採用 <code>goToURL("javascript:...")</code> 注入，經驗證在 WebView2 環境下運作穩定且延遲極低。</li>
+        </ul>
+    </li>
+</ul>
+
+<hr/>
+
+<h3>工作記錄 (2026-05-17 21:00) - 全面重構與 MIDI 驗證</h3>
+<ul>
+    <li><b>執行動作：</b>
+        <ul>
+            <li>建立 <code>MidiController</code> 獨立模組，封裝所有 MIDI 邏輯。</li>
+            <li>實作仿 Waveform 的 React 軌道頭。</li>
+            <li>解決所有 MSVC 編譯錯誤，達成 clean build。</li>
+        </ul>
+    </li>
+    <li><b>驗證結果：</b>
+        <ul>
+            <li>[PASSED] 後端編譯成功 (Debug x64)。</li>
+            <li>[PASSED] 前端組件化重構，程式碼清晰度大幅提升。</li>
+            <li>[PASSED] MIDI 設備偵測、路由與 30Hz 即時訊號燈。</li>
+        </ul>
+    </li>
+    <li><b>下次啟動方向 (Next Steps)：</b>
+        <ul>
+            <li>實作 MIDI Clip 錄音功能。</li>
+            <li>開發基礎合成器積木 (VCO/VCF)。</li>
+        </ul>
+    </li>
+</ul>
+<hr/><h3>技術深挖 (Technical Deep Dive) - 0.5 Hz 陷阱與雙重更新同步</h3><ul><li><b>現象：</b>滑桿拉動有 Log 但聲音無掃頻感，聽起來像微弱的音量控制。</li><li><b>診斷：</b>4OSC 的 ValueTree 屬性 <code>filterFreq</code> 直接對應 Hz。將滑桿的 0.5 (Normalized) 寫入 ValueTree 會將截止頻率鎖定在 0.5 Hz。</li><li><b>解決方案：</b>實作「雙重更新模式 (Dual Update Pattern)」。先將 0-1 映射為插件原始範圍，再同步呼叫 <code>setParameter()</code> 與 <code>setProperty()</code>。</li><li><b>前端 Key 衝突：</b>手動 Prepend 的 'All MIDI Ins' 導致 React Key 重複，已改用 <code>__all_midi_ins__</code> 唯一識別碼。</li></ul>

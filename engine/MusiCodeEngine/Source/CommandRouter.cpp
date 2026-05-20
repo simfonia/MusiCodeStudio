@@ -42,6 +42,22 @@ void CommandRouter::registerHandlers()
             audioSettingsCallback();
         updateStatus("Opening Audio Settings...", juce::Colours::cyan);
     };
+
+    commandHandlers["get_midi_inputs"] = [this](const juce::var&) {
+        auto json = audioEngine.getMidiController().getMidiInputsAsJson();
+        if (eventCallback != nullptr)
+             eventCallback("midi_inputs_list", json);
+    };
+
+    commandHandlers["set_track_input"] = [this](const juce::var& params) {
+        int trackIndex = params.getProperty("trackIndex", 0);
+        juce::String deviceName = params.getProperty("deviceName", "All MIDI Ins").toString();
+        bool success = audioEngine.getMidiController().setTrackInput(trackIndex, deviceName);
+        if (success)
+            updateStatus("Track " + juce::String(trackIndex) + " Input -> " + deviceName, juce::Colours::green);
+        else
+            updateStatus("Failed to set Track " + juce::String(trackIndex) + " Input", juce::Colours::red);
+    };
 }
 
 void CommandRouter::processCommand(const juce::String& jsonString)

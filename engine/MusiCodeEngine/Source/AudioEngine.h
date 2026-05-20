@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include "PluginController.h"
+#include "MidiController.h"
 
 /**
  * AudioEngine - 封裝 Tracktion Engine 的核心邏輯
@@ -23,6 +24,9 @@ public:
     double getBpm() const;
     void setPluginParameter(juce::String pluginName, juce::String paramID, float newValue);
 
+    // MIDI 控制
+    MidiController& getMidiController() { return *midiController; }
+
     /** 建立測試場景 (Track 1, 4OSC, MIDI Clip) */
     void setupTestScene();
 
@@ -35,6 +39,7 @@ private:
     tracktion_engine::Engine engine;
     std::unique_ptr<tracktion_engine::Edit> edit;
     std::unique_ptr<PluginController> pluginController;
+    std::unique_ptr<MidiController> midiController;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 };

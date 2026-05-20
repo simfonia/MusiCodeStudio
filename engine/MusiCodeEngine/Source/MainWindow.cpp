@@ -20,8 +20,19 @@ MainComponent::MainComponent(AudioEngine& engine)
 
     // 注入 show_audio_settings 指令處理
     router->setAudioSettingsCallback([this]() { showAudioSettings(); });
+    router->setEventCallback([this](const juce::String& name, const juce::var& data) {
+        sendEventToJS(name, data);
+    });
 
-    // 3. 初始化 WebView2 瀏覽器 (啟用原生整合)
+    // 4. 初始化 MIDI 訊號回傳
+    audioEngine.getMidiController().setSignalLevelCallback([this](int trackIndex, float level) {
+        juce::DynamicObject::Ptr data = new juce::DynamicObject();
+        data->setProperty("trackIndex", trackIndex);
+        data->setProperty("level", level);
+        sendEventToJS("midi_signal", data.get());
+    });
+
+    // 5. 初始化 WebView2 瀏覽器 (啟用原生整合)
     webBrowser = std::make_unique<juce::WebBrowserComponent>(
         juce::WebBrowserComponent::Options{}
             .withBackend(juce::WebBrowserComponent::Options::Backend::webview2)
@@ -74,6 +85,26 @@ void MainComponent::showAudioSettings()
     options.componentToCentreAround = this;
 
     options.launchAsync();
+}
+
+void MainComponent::sendEventToJS(const juce::String& eventName, const juce::var& data)
+{
+    if (webBrowser != nullptr)
+    {
+        juce::DynamicObject::Ptr eventObj = new juce::DynamicObject();
+        eventObj->setProperty("type", eventName);
+        eventObj->setProperty("detail", data);
+        
+        juce::String json = juce::JSON::toString(eventObj.get());
+        
+        // 透過 CustomEvent 傳遞給前端 window
+        juce::String js = "window.dispatchEvent(new CustomEvent('MusiCodeEngineEvent', { detail: " + json + " }));";
+        
+        juce::MessageManager::callAsync([this, js]() {
+            if (webBrowser != nullptr)
+                webBrowser->goToURL("javascript:" + js);
+        });
+    }
 }
 
 //==============================================================================

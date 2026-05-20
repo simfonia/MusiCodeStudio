@@ -17,6 +17,9 @@ public:
     // 彈出音訊設定對話框
     void showAudioSettings();
 
+    /** 向前端發送非同步事件 */
+    void sendEventToJS(const juce::String& eventName, const juce::var& data);
+
 private:
     AudioEngine& audioEngine;
     juce::Label statusLabel;

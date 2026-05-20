@@ -11,6 +11,7 @@ class CommandRouter
 public:
     using StatusCallback = std::function<void(const juce::String&, juce::Colour)>;
     using AudioSettingsCallback = std::function<void()>;
+    using EventCallback = std::function<void(const juce::String&, const juce::var&)>;
 
     CommandRouter(AudioEngine& engine, StatusCallback statusCallback);
 
@@ -20,6 +21,7 @@ public:
     void processCommand(const juce::var& json);
 
     void setAudioSettingsCallback(AudioSettingsCallback callback) { audioSettingsCallback = callback; }
+    void setEventCallback(EventCallback callback) { eventCallback = callback; }
 
 private:
     void registerHandlers();
@@ -28,6 +30,7 @@ private:
     AudioEngine& audioEngine;
     StatusCallback statusCallback;
     AudioSettingsCallback audioSettingsCallback;
+    EventCallback eventCallback;
 
     using CommandHandler = std::function<void(const juce::var&)>;
     std::map<juce::String, CommandHandler> commandHandlers;
