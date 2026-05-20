@@ -78,7 +78,7 @@ public:
     ~PluginController();
 
     // 顯示指定軌道上第一個插件的視窗
-    void showPluginWindow(int trackIndex);
+    void showPluginWindow(tracktion_engine::EditItemID trackID);
 
     /** 在整個 Edit 中尋找名稱匹配的插件並設定參數 (具備執行緒安全性與全域搜尋) */
     void setPluginParameter(juce::String pluginNameMatch, juce::String paramID, float newValue);

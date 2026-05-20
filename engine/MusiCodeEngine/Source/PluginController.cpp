@@ -1,4 +1,6 @@
 #include "PluginController.h"
+#include "ParameterDispatcher.h"
+#include "TrackManager.h"
 
 PluginController::PluginController(te::Edit& e, te::Engine& eng) 
     : edit(e), engine(eng)
@@ -10,64 +12,66 @@ PluginController::~PluginController()
     activeWindow = nullptr;
 }
 
-void PluginController::showPluginWindow(int trackIndex)
+void PluginController::showPluginWindow(te::EditItemID trackID)
 {
-    // ... existing implementation ...
-}
-
-void PluginController::setPluginParameter(juce::String pluginNameMatch, juce::String paramID, float newValue)
-{
-    // 必須在 Message Thread 執行以符合 Tracktion 架構
-    juce::MessageManager::callAsync([this, pluginNameMatch, paramID, newValue]() {
-        te::Plugin::Ptr targetPlugin = nullptr;
-
-        // 全域搜尋匹配名稱的插件
-        for (auto audioTrack : te::getAudioTracks(edit))
+    // 必須在 Message Thread 執行以操作 UI
+    juce::MessageManager::callAsync([this, trackID]() {
+        auto track = MusiCode::TrackManager::findAudioTrackByID(edit, trackID);
+        if (track == nullptr)
         {
-            for (auto p : audioTrack->pluginList)
-            {
-                // 同時檢查內部名稱與顯示名稱
-                if (p->getName().containsIgnoreCase(pluginNameMatch) || 
-                    p->getShortName(256).containsIgnoreCase(pluginNameMatch) ||
-                    pluginNameMatch.containsIgnoreCase(p->getName()))
-                {
-                    targetPlugin = p;
-                    break;
-                }
-            }
-            if (targetPlugin != nullptr) break;
+            DBG("PluginController: Track NOT FOUND for ID: " + trackID.toString());
+            return;
         }
 
-        if (targetPlugin != nullptr)
+        // 獲取該軌道上的第一個插件
+        if (auto p = track->pluginList[0])
         {
-            if (auto param = targetPlugin->getAutomatableParameterByID(paramID))
+            // 使用 Tracktion 內建的 WindowState 系統
+            if (p->windowState != nullptr)
             {
-                // 執行範圍轉換：從 0.0~1.0 映射到插件原始範圍 (例如 Pitch: 0~135)
-                float rawValue = param->valueRange.convertFrom0to1(newValue);
-
-                juce::String trackInfo = "Unknown Track";
-                if (auto* t = targetPlugin->getOwnerTrack())
-                    trackInfo = t->getName() + " (ID: " + t->itemID.toString() + ")";
-
-                DBG("DUAL UPDATE [" + paramID + "] -> RAW: " + juce::String(rawValue, 2) + " | Track: " + trackInfo);
-                
-                // 1. 更新參數物件 (處理鏈同步)
-                param->setParameter(rawValue, juce::sendNotification);
-                
-                // 2. 更新 ValueTree 屬性 (持久化同步)
-                targetPlugin->state.setProperty(paramID, rawValue, nullptr);
+                p->windowState->showWindowExplicitly();
+                DBG("PluginController: Showing window for plugin: " + p->getName());
             }
             else
             {
-                // 回退機制：如果找不到對應的參數物件，嘗試直接更新 ValueTree 屬性
-                // 這適用於像 filterType 這種 CachedValue 屬性
-                DBG("FALLBACK UPDATE [" + paramID + "] -> " + juce::String(newValue, 2));
-                targetPlugin->state.setProperty(paramID, newValue, nullptr);
+                DBG("PluginController: Plugin has no windowState: " + p->getName());
             }
         }
         else
         {
-            DBG("Plugin NOT FOUND matching: " + pluginNameMatch);
+            DBG("PluginController: No plugins found on track: " + track->getName());
         }
     });
+}
+
+void PluginController::setPluginParameter(juce::String pluginNameMatch, juce::String paramID, float newValue)
+{
+    // 1. 尋找目標插件 (使用更強大的匹配邏輯)
+    te::Plugin::Ptr targetPlugin = nullptr;
+
+    for (auto audioTrack : te::getAudioTracks(edit))
+    {
+        for (auto p : audioTrack->pluginList)
+        {
+            if (p->getName().containsIgnoreCase(pluginNameMatch) || 
+                p->getShortName(256).containsIgnoreCase(pluginNameMatch) ||
+                pluginNameMatch.containsIgnoreCase(p->getName()))
+            {
+                targetPlugin = p;
+                break;
+            }
+        }
+        if (targetPlugin != nullptr) break;
+    }
+
+    // 2. 委託給 ParameterDispatcher
+    if (targetPlugin != nullptr)
+    {
+        DBG("PluginController: Forwarding [" + paramID + "] to Dispatcher | Plugin: " + targetPlugin->getName());
+        MusiCode::ParameterDispatcher::setParameter(targetPlugin, paramID, newValue);
+    }
+    else
+    {
+        DBG("PluginController: CANNOT FIND Plugin matching: " + pluginNameMatch);
+    }
 }

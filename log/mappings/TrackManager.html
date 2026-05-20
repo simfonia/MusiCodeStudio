@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>模組說明 - TrackManager</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: auto; background: #fafafa; }
+        .container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #e67e22; padding-bottom: 10px; }
+        code { background: #eee; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+        pre { background: #2d2d2d; color: #ccc; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .method { margin-bottom: 20px; border-left: 4px solid #e67e22; padding-left: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrackManager 模組</h1>
+        <p>位置：<code>engine/MusiCodeEngine/Source/TrackManager.h</code></p>
+        <p>功能：提供音軌 ID (EditItemID) 的定位、轉換與元數據封裝。解決音軌順序變動導致的索引位移問題。</p>
+
+        <h2>主要方法</h2>
+        
+        <div class="method">
+            <h3><code>stringToID(const String& idString)</code></h3>
+            <p>將前端傳來的 UUID 字串轉換為 <code>te::EditItemID</code>。</p>
+        </div>
+
+        <div class="method">
+            <h3><code>findAudioTrackByID(te::Edit& edit, te::EditItemID id)</code></h3>
+            <p>在指定 Edit 中尋找對應 ID 的音軌指針。</p>
+        </div>
+
+        <div class="method">
+            <h3><code>getTracksInfo(te::Edit& edit)</code></h3>
+            <p>返回一個 <code>juce::var</code> (Array of Objects)，包含所有音軌的 ID、名稱與當前索引，供前端渲染軌道列表。</p>
+        </div>
+
+        <h2>範例代碼</h2>
+        <pre>
+// 前端傳來指令 { "action": "...", "trackID": "1001" }
+auto id = MusiCode::TrackManager::stringToID(params["trackID"]);
+auto* track = MusiCode::TrackManager::findAudioTrackByID(edit, id);
+        </pre>
+    </div>
+</body>
+</html>

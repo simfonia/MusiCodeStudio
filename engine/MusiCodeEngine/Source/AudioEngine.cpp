@@ -1,4 +1,5 @@
 #include "AudioEngine.h"
+#include "ParameterDispatcher.h"
 #include <iostream>
 
 namespace te = tracktion_engine;
@@ -65,22 +66,17 @@ void AudioEngine::setupTestScene()
             audioTrack->pluginList.insertPlugin (newPlugin, 0, nullptr);
             newPlugin->setEnabled(true);
             
-            // --- 核心修正：同時設定 ValueTree 屬性與 AutomatableParameter ---
-            // 4OSC waveShape: 0=Sine, 1=Tri, 2=Pulse, 3=Saw
-            newPlugin->state.setProperty("waveShape1", 3, nullptr);
-            newPlugin->state.setProperty("filterType", 1, nullptr); // LP
-            newPlugin->state.setProperty("osc1Gain", 1.0f, nullptr);
+            // 使用 ParameterDispatcher 進行統一初始化
+            MusiCode::ParameterDispatcher::setParameters(newPlugin, {
+                {"waveShape1", 1.0f},      // 1.0 * 3 = 3 (Sawtooth)
+                {"filterType", 0.25f},     // 0.25 * 4 = 1 (Low Pass)
+                {"osc1Gain", 1.0f},
+                {"filterFreq", 0.8f},
+                {"filterResonance", 0.5f},
+                {"gain", 0.8f}
+            });
 
-            auto setP = [&](const char* id, float val) {
-                if (auto p = newPlugin->getAutomatableParameterByID (id))
-                    p->setParameter (p->valueRange.convertFrom0to1(val), juce::sendNotification);
-            };
-
-            setP ("filterFreq", 0.8f); 
-            setP ("filterResonance", 0.5f);
-            setP ("gain", 0.8f);
-
-            DBG("setupTestScene: 4OSC Initialized (Sawtooth + Dual Sync)");
+            DBG("setupTestScene: 4OSC Initialized via ParameterDispatcher");
         }
 
         // --- 補回 MIDI Clip 建立 (解決 Play 無聲) ---

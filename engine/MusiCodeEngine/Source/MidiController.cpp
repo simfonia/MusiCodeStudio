@@ -1,4 +1,5 @@
 #include "MidiController.h"
+#include "TrackManager.h"
 #include <iostream>
 
 namespace te = tracktion_engine;
@@ -57,13 +58,11 @@ juce::var MidiController::getMidiInputsAsJson()
     return deviceList;
 }
 
-bool MidiController::setTrackInput(int trackIndex, const juce::String& deviceName)
+bool MidiController::setTrackInput(te::EditItemID trackID, const juce::String& deviceName)
 {
-    auto audioTracks = te::getAudioTracks(edit);
-    if (trackIndex < 0 || trackIndex >= audioTracks.size())
-        return false;
+    auto track = MusiCode::TrackManager::findAudioTrackByID(edit, trackID);
+    if (track == nullptr) return false;
 
-    auto track = audioTracks[trackIndex];
     edit.getTransport().ensureContextAllocated();
 
     bool success = false;
@@ -95,17 +94,14 @@ void MidiController::changeListenerCallback(juce::ChangeBroadcaster* source)
 
 void MidiController::timerCallback()
 {
-    auto audioTracks = te::getAudioTracks(edit);
-    if (lastSignalLevels.size() != (size_t)audioTracks.size())
-        lastSignalLevels.resize(audioTracks.size(), 0.0f);
-
-    for (int i = 0; i < (int)audioTracks.size(); ++i)
+    // 平滑衰減所有軌道的訊號強度
+    for (auto& pair : lastSignalLevels)
     {
-        lastSignalLevels[i] = juce::jmax(0.0f, lastSignalLevels[i] - 0.10f);
-        if (lastSignalLevels[i] > 0.01f)
+        pair.second = juce::jmax(0.0f, pair.second - 0.10f);
+        if (pair.second > 0.01f)
         {
             if (signalLevelCallback)
-                signalLevelCallback(i, lastSignalLevels[i]);
+                signalLevelCallback(pair.first, pair.second);
         }
     }
 }
@@ -118,15 +114,13 @@ void MidiController::handleIncomingMidiMessage (juce::MidiInput* source, const j
     float level = message.getVelocity() / 127.0f;
     juce::String devName = source->getName();
     
-    DBG("RAW MIDI In [" + devName + "]: Velocity " + juce::String((int)message.getVelocity()) + " -> Level " + juce::String(level, 2));
-
     auto audioTracks = te::getAudioTracks(edit);
-    for (int i = 0; i < (int)audioTracks.size(); ++i)
+    for (auto track : audioTracks)
     {
         bool isRouted = false;
         for (auto instance : edit.getAllInputDevices())
         {
-            if (te::isOnTargetTrack(*instance, *audioTracks[i], 0))
+            if (te::isOnTargetTrack(*instance, *track, 0))
             {
                 if (instance->getInputDevice().getName() == devName || instance->getInputDevice().getName().contains("All MIDI"))
                 {
@@ -136,11 +130,11 @@ void MidiController::handleIncomingMidiMessage (juce::MidiInput* source, const j
             }
         }
 
-        if (isRouted && level > lastSignalLevels[i])
+        if (isRouted && level > lastSignalLevels[track->itemID])
         {
-            lastSignalLevels[i] = level;
+            lastSignalLevels[track->itemID] = level;
             if (signalLevelCallback)
-                signalLevelCallback(i, level);
+                signalLevelCallback(track->itemID, level);
         }
     }
 }

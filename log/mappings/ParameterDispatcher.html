@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>模組說明 - ParameterDispatcher</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: auto; background: #fafafa; }
+        .container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        code { background: #eee; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+        pre { background: #2d2d2d; color: #ccc; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .method { margin-bottom: 20px; border-left: 4px solid #3498db; padding-left: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ParameterDispatcher 模組</h1>
+        <p>位置：<code>engine/MusiCodeEngine/Source/ParameterDispatcher.h</code></p>
+        <p>功能：負責插件參數的標準化對接、執行緒同步與持久化。核心實作了「雙重更新同步模式」。</p>
+
+        <h2>主要方法</h2>
+        
+        <div class="method">
+            <h3><code>setParameter(te::Plugin::Ptr plugin, const String& id, float normalizedValue)</code></h3>
+            <p>設定單一插件參數。會自動切換至 Message Thread 執行。</p>
+            <ul>
+                <li>對 <code>AutomatableParameter</code> 進行 0-1 到 Raw 的範圍轉換。</li>
+                <li>同步更新 <code>ValueTree</code> 屬性以確保 UI 與持久化一致。</li>
+                <li>支援 <code>Fallback</code> 模式，處理離散屬性（如 4OSC 的 filterType）。</li>
+            </ul>
+        </div>
+
+        <div class="method">
+            <h3><code>setParameters(te::Plugin::Ptr plugin, const std::map<String, float>& params)</code></h3>
+            <p>批量設定參數。常用於測試場景或預設值加載。</p>
+        </div>
+
+        <h2>範例代碼</h2>
+        <pre>
+// 將 4OSC 的濾波頻率設為中點 (0.5)
+MusiCode::ParameterDispatcher::setParameter(my4Osc, "filterFreq", 0.5f);
+        </pre>
+    </div>
+</body>
+</html>

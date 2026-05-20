@@ -66,6 +66,7 @@
             font-size: 0.9em;
             overflow-x: auto;
             margin-top: 10px;
+            white-space: pre; /* 確保換行被正確呈現 */
         }
         .note {
             background: #fff9c4;
@@ -108,31 +109,25 @@ options.numUndoLevelsToStore = 100;
 
 auto edit = std::make_unique<te::Edit>(options);
 
-// 雙重更新同步模式 (Dual Update Pattern) - 解決 4OSC Hz vs 0-1 衝突
-juce::MessageManager::callAsync([plugin, paramID, newValue]() {
-    if (auto param = plugin->getAutomatableParameterByID(paramID)) {
-        float raw = param->valueRange.convertFrom0to1(newValue);
-        param->setParameter(raw, juce::sendNotification);
-        plugin->state.setProperty(paramID, raw, nullptr); // 持久化同步
-    } else {
-        plugin->state.setProperty(paramID, newValue, nullptr); // 回退機制
-    }
-});
+// 雙重更新同步模式 (Dual Update Pattern) - 封裝於 ParameterDispatcher
+// 同時處理 AutomatableParameter (音訊執行緒) 與 ValueTree (持久化與狀態同步)
+MusiCode::ParameterDispatcher::setParameter(targetPlugin, "filterFreq", 0.5f);
 
-// 直接 MIDI 監聽回呼 (Direct Callback) - 確保力度精確度
-void handleIncomingMidiMessage (juce::MidiInput* source, const juce::MidiMessage& message) {
-    if (message.isNoteOn()) {
-        float level = message.getVelocity() / 127.0f;
-        // 推送到前端...
-    }
-}
+// 穩定音軌定位 (Stable Track ID Pattern) - 封裝於 TrackManager
+// 避免使用 trackIndex (0, 1, 2...)，改用 EditItemID 以應對音軌移動或刪除
+auto trackID = MusiCode::TrackManager::stringToID("1003");
+auto* track = MusiCode::TrackManager::findAudioTrackByID(edit, trackID);
+
+// 獲取所有音軌資訊 (供前端渲染同步)
+juce::var tracksJson = MusiCode::TrackManager::getTracksInfo(edit);
             </div>
             <div class="note">
                 <b>本專案關鍵點：</b> 
                 <ul>
                     <li><b>初始化順序：</b> 必須先呼叫 <code>ensureContextAllocated()</code>，否則無法獲取有效的 <code>InputDeviceInstance</code>。</li>
                     <li><b>濾波器陷阱：</b> 直接將 0-1 寫入 4OSC 的 <code>filterFreq</code> 會被視為 Hz，導致靜音。必須進行範圍轉換。</li>
-                    <li><b>設備開啟：</b> 必須在 JUCE 層級明確 <code>setMidiInputDeviceEnabled(true)</code> 並註冊回呼，訊號才不會漏失。</li>
+                    <li><b>執行緒規範：</b> 參數異動必須在 <b>Message Thread</b> 執行。<code>ParameterDispatcher</code> 已內建 <code>callAsync</code> 處理。</li>
+                    <li><b>ID 轉換：</b> <code>EditItemID::fromString()</code> 用於解析前端傳回的 ID 字串。</li>
                 </ul>
             </div>
         </div>

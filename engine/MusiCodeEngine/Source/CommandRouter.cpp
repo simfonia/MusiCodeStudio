@@ -1,4 +1,5 @@
 #include "CommandRouter.h"
+#include "TrackManager.h"
 
 CommandRouter::CommandRouter(AudioEngine& engine, StatusCallback callback)
     : audioEngine(engine), statusCallback(callback)
@@ -25,9 +26,15 @@ void CommandRouter::registerHandlers()
     };
 
     commandHandlers["show_plugin_window"] = [this](const juce::var& params) {
-        int trackIndex = params.getProperty("track", 0);
-        audioEngine.getPluginController().showPluginWindow(trackIndex);
-        updateStatus("Showing Plugin Window (Track " + juce::String(trackIndex) + ")", juce::Colours::cyan);
+        tracktion_engine::EditItemID trackID;
+        
+        if (params.hasProperty("trackID"))
+            trackID = MusiCode::TrackManager::stringToID(params.getProperty("trackID", "").toString());
+        else
+            trackID = MusiCode::TrackManager::getIDFromIndex(audioEngine.getEdit(), params.getProperty("track", 0));
+
+        audioEngine.getPluginController().showPluginWindow(trackID);
+        updateStatus("Showing Plugin Window (Track: " + trackID.toString() + ")", juce::Colours::cyan);
     };
 
     commandHandlers["set_plugin_param"] = [this](const juce::var& params) {
@@ -49,14 +56,27 @@ void CommandRouter::registerHandlers()
              eventCallback("midi_inputs_list", json);
     };
 
+    commandHandlers["get_tracks"] = [this](const juce::var&) {
+        auto json = MusiCode::TrackManager::getTracksInfo(audioEngine.getEdit());
+        if (eventCallback != nullptr)
+             eventCallback("tracks_list", json);
+    };
+
     commandHandlers["set_track_input"] = [this](const juce::var& params) {
-        int trackIndex = params.getProperty("trackIndex", 0);
-        juce::String deviceName = params.getProperty("deviceName", "All MIDI Ins").toString();
-        bool success = audioEngine.getMidiController().setTrackInput(trackIndex, deviceName);
-        if (success)
-            updateStatus("Track " + juce::String(trackIndex) + " Input -> " + deviceName, juce::Colours::green);
+        tracktion_engine::EditItemID trackID;
+        
+        if (params.hasProperty("trackID"))
+            trackID = MusiCode::TrackManager::stringToID(params.getProperty("trackID", "").toString());
         else
-            updateStatus("Failed to set Track " + juce::String(trackIndex) + " Input", juce::Colours::red);
+            trackID = MusiCode::TrackManager::getIDFromIndex(audioEngine.getEdit(), params.getProperty("trackIndex", 0));
+
+        juce::String deviceName = params.getProperty("deviceName", "All MIDI Ins").toString();
+        bool success = audioEngine.getMidiController().setTrackInput(trackID, deviceName);
+        
+        if (success)
+            updateStatus("Track " + trackID.toString() + " Input -> " + deviceName, juce::Colours::green);
+        else
+            updateStatus("Failed to set Track " + trackID.toString() + " Input", juce::Colours::red);
     };
 }
 

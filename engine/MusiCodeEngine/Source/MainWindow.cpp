@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "TrackManager.h"
 
 //==============================================================================
 MainComponent::MainComponent(AudioEngine& engine)
@@ -25,9 +26,9 @@ MainComponent::MainComponent(AudioEngine& engine)
     });
 
     // 4. 初始化 MIDI 訊號回傳
-    audioEngine.getMidiController().setSignalLevelCallback([this](int trackIndex, float level) {
+    audioEngine.getMidiController().setSignalLevelCallback([this](tracktion_engine::EditItemID trackID, float level) {
         juce::DynamicObject::Ptr data = new juce::DynamicObject();
-        data->setProperty("trackIndex", trackIndex);
+        data->setProperty("trackID", trackID.toString());
         data->setProperty("level", level);
         sendEventToJS("midi_signal", data.get());
     });

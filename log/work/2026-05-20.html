@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>工作日誌 - 2026-05-20</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 1000px; margin: auto; background: #f4f4f4; }
+        .log-entry { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .status-done { color: green; font-weight: bold; }
+        .status-fix { color: orange; font-weight: bold; }
+        .status-refactor { color: blue; font-weight: bold; }
+        code { background: #eee; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+        pre { background: #2d2d2d; color: #ccc; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .tech-dive { background: #eef; border-left: 5px solid #33f; padding: 15px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="log-entry">
+        <h1>工作日誌 - 2026-05-20</h1>
+        
+        <h2>今日目標</h2>
+        <ul>
+            <li>完成參數管理模組化 (ParameterDispatcher)。</li>
+            <li>完成音軌 ID 系統模組化 (TrackManager)。</li>
+            <li>確保 4OSC 參數連動與 MIDI 訊號監控在重構後依然穩定。</li>
+        </ul>
+
+        <h2>執行紀錄</h2>
+        <ul>
+            <li><span class="status-refactor">[Refactor]</span> 建立 <code>ParameterDispatcher</code> 類別，統一封裝 "Dual Update Pattern"。</li>
+            <li><span class="status-fix">[Fix]</span> 修正 4OSC 離散參數 (filterType, waveShape) 在 Dispatcher 中的映射邏輯。</li>
+            <li><span class="status-refactor">[Refactor]</span> 建立 <code>TrackManager</code> 類別，將音軌管理從不穩定的 <code>trackIndex</code> 遷移至持久的 <code>te::EditItemID</code>。</li>
+            <li><span class="status-refactor">[Refactor]</span> 重構 <code>MidiController</code> 與 <code>PluginController</code>，全面採用 ID 定位音軌。</li>
+            <li><span class="status-done">[Done]</span> 更新 <code>CommandRouter</code>，新增 <code>get_tracks</code> 指令，並讓現有指令向後相容索引模式。</li>
+        </ul>
+
+        <div class="tech-dive">
+            <h2>技術深挖 (Technical Deep Dive)</h2>
+            <h3>1. 參數派發的回補 (Fallback) 與離散映射</h3>
+            <p>在 4OSC 中，部分參數 (如 <code>filterType</code>) 不是 <code>AutomatableParameter</code>，無法自動轉換 0-1 範圍。我在 <code>ParameterDispatcher</code> 中實作了手動映射：</p>
+            <pre>if (paramID == "filterType") mappedValue = std::round(normalizedValue * 4.0f); // 0~4</pre>
+            <p>這確保了從積木或前端傳來的 0-1 標準化值能正確對接到插件的內部狀態。</p>
+
+            <h3>2. te::EditItemID 的穩定性</h3>
+            <p>Tracktion Engine 的 <code>EditItemID</code> 在物件建立時生成，並儲存在 <code>ValueTree</code> 中。即使音軌在 Edit 中的順序改變，其 ID 保持不變。這對於前端 UI (如 React) 維護元件狀態至關重要，避免了「索引移位」導致的操作錯誤。</p>
+            
+            <h3>3. PluginWindowState::showWindowExplicitly()</h3>
+            <p>在重構中發現 <code>showWindow()</code> 是 private 成員，正確的 UI 操作應呼叫 <code>showWindowExplicitly()</code> 以強制開啟插件原生視窗。</p>
+        </div>
+
+        <h2>下次啟動方向 (Next Steps)</h2>
+        <ul>
+            <li>實作音訊與 MIDI Clip 的錄製流程 (需研究 <code>te::RecordingEngine</code> 與 <code>te::MidiInputDevice</code> 的聯動)。</li>
+            <li>設計可動態接線的自定義 DSP 插件容器 (積木化底層)。</li>
+            <li>前端對接 <code>get_tracks</code> 指令，顯示正確的音軌 ID 與名稱。</li>
+        </ul>
+    </div>
+</body>
+</html>

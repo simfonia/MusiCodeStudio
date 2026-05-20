@@ -1,42 +1,56 @@
 # MusiCodeStudio 專案結構 (FILE_STRUCTURE.md)
 
-- DESIGN.md (專案設計計畫書)
-- MusiCodeStudio.code-workspace (VS Code 工作區檔案)
-- engine/
-  - tracktion_engine/ (Tracktion Engine 原始碼庫與子模組)
-  - MusiCodeEngine/ (專屬 C++ 後端引擎專案)
-    - CMakeLists.txt
-    - Main.cpp
-    - build/ (編譯輸出目錄)
-- ui/ (前端 Vite + React 專案目錄)
-  - src/
-    - views/ (Staff, PianoRoll, Blockly 視圖)
-    - services/ (EngineService 通訊服務)
-- log/
-  - todo.md (任務清單)
-  - handover.md (任務交接)
-  - details.md (技術細節)
-  - work/ (每日工作日誌)
+```text
+MusiCodeStudio/
+├── DESIGN.md                          # 專案設計計畫書
+├── GEMINI.md                          # 開發規範與技術鐵律
+├── MusiCodeStudio.code-workspace      # VS Code 工作區配置
+├── package.json                       # 全域開發指令定義
+│
+├── engine/                            # 音訊引擎層 (C++)
+│   ├── MusiCodeEngine/                # 專屬引擎實作
+│   │   ├── Source/                    # 核心原始碼
+│   │   │   ├── Main.cpp               # 入口程式
+│   │   │   ├── MainWindow.cpp/h       # WebView2 與事件橋接
+│   │   │   ├── AudioEngine.cpp/h      # TE/Edit 核心管理
+│   │   │   ├── ParameterDispatcher.h  # [核心] 參數派發與 Dual Update
+│   │   │   ├── TrackManager.h         # [核心] EditItemID 音軌定位
+│   │   │   ├── MidiController.cpp/h   # MIDI 路由與訊號監控
+│   │   │   ├── PluginController.cpp/h # 插件管理與視窗顯示
+│   │   │   ├── CommandRouter.cpp/h    # JSON 指令解析中心
+│   │   │   └── HttpServer.cpp/h       # 通訊與事件推送伺服器
+│   │   └── CMakeLists.txt             # CMake 構建腳本
+│   └── tracktion_engine/              # Tracktion Engine 原始碼 (子模組)
+│
+├── ui/                                # 前端介面層 (React/Vite)
+│   └── src/
+│       ├── App.tsx                    # 前端主入口框架
+│       ├── services/
+│       │   └── EngineService.ts       # 指令發送與事件監聽服務
+│       ├── components/                # 模組化 UI 組件
+│       │   ├── TrackList.tsx          # 軌道列表容器
+│       │   ├── TrackHeader.tsx        # 軌道頭 (含 MIDI LED)
+│       │   ├── PluginRack.tsx         # 插件控制面板
+│       │   └── Toolbar.tsx            # 播放控制工具列
+│       └── views/                     # 專業視圖模組
+│           ├── BlocklyView.tsx        # 積木編輯器
+│           ├── PianoRollView.tsx      # 鋼琴捲軸
+│           └── StaffView.tsx          # 五線譜視圖
+│
+├── log/                               # 開發紀錄與知識庫
+│   ├── todo.md                        # 任務進度追蹤 (唯一入口)
+│   ├── work/                          # 每日工作日誌 (HTML 診斷)
+│   └── mappings/                      # 長期技術對照表
+│       ├── Framework_API_Index.html   # API 範例索引
+│       ├── ParameterDispatcher.html   # 參數模組手冊
+│       ├── TrackManager.html          # 音軌模組手冊
+│       └── MidiController.html        # MIDI 路由對照表
+│
+└── assets/                            # 靜態資源、圖示與備份
+```
 
-## [2026-05-02 更新]
-... (內容省略)
-└── .vscode/ (專案全域環境配置)
-    ├── settings.json
-    ├── tasks.json (新增：npm 指令任務)
-    ├── launch.json (新增：F5 啟動 UI 配置)
-
-## [2026-05-17 更新]
-- engine/MusiCodeEngine/Source/
-    - MidiController.cpp/h (新增：獨立 MIDI 管理與訊號監控模組)
-    - PluginController.cpp/h (新增：插件生命週期與視圖管理)
-    - CommandRouter.cpp/h (更新：整合 MIDI 指令與事件推送)
-    - MainWindow.cpp/h (更新：整合 WebView2 與 MIDI 事件橋接)
-- ui/src/
-    - components/ (新增：模組化 UI 組件目錄)
-        - TrackHeader.tsx (新增：仿 Waveform 軌道頭，含 MIDI 指示燈)
-        - TrackList.tsx (新增：軌道管理佈局)
-        - Toolbar.tsx (新增：頂部傳輸控制模組)
-        - PluginRack.tsx (新增：右側插件控制鏈)
-    - App.tsx (重構：全面組件化，提升可維護性)
-- docs/TE_Cookbook.html (新增：Tracktion Engine 最佳實作指南)
-- log/todo.md (更新：標註前端重構與 MIDI 監控完成)
+## 核心架構說明
+- **後端引擎**：基於 JUCE + Tracktion Engine。採用 `CommandRouter` 模式處理非同步 JSON 指令。
+- **前端 UI**：基於 React + Konva/Blockly。透過 `EngineService` 與後端進行 HTTP/WebSocket 通訊。
+- **通訊協議**：採用自定義 JSON 格式。所有音軌異動均透過 `EditItemID` 進行持久化連結，確保穩定性。
+- **開發規範**：所有重大變更需更新 `log/` 下的對應對照表與日誌。
