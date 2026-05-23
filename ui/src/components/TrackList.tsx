@@ -4,7 +4,7 @@ import TrackHeader from './TrackHeader';
 import { EngineService } from '../services/EngineService';
 
 interface TrackListProps {
-  tracks: { id: number, name: string }[];
+  tracks: { id: string | number, name: string }[];
 }
 
 const TrackList: React.FC<TrackListProps> = ({ tracks }) => {
@@ -12,12 +12,12 @@ const TrackList: React.FC<TrackListProps> = ({ tracks }) => {
 
   return (
     <aside className="track-list">
-      {tracks.map((track, index) => (
+      {tracks.map((track) => (
         <TrackHeader 
           key={track.id}
-          trackIndex={index}
+          trackID={track.id.toString()}
           trackName={track.name}
-          onShowPlugin={() => engine.showPluginWindow(index)}
+          onShowPlugin={() => engine.showPluginWindow(track.id)}
         />
       ))}
       

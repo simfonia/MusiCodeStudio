@@ -29,18 +29,41 @@ const Toolbar: React.FC<ToolbarProps> = ({ bpm, setBpm, isRecording, setIsRecord
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleToggleRecord = () => {
+    if (isRecording) {
+      engine.stop();
+      setIsRecording(false);
+    } else {
+      engine.record();
+      setIsRecording(true);
+    }
+  };
+
+  const handleStop = () => {
+    engine.stop();
+    setIsRecording(false);
+  };
+
   return (
     <header className="toolbar">
       <div className="logo">MusiCode Studio</div>
       
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <button className="transport-btn" onClick={() => engine.play()}><Play size={18} fill="currentColor" /></button>
-        <button className="transport-btn" onClick={() => engine.stop()}><Square size={18} fill="currentColor" /></button>
+        <button className="transport-btn" onClick={handleStop}><Square size={18} fill="currentColor" /></button>
         <button 
           className={`transport-btn record ${isRecording ? 'active' : ''}`}
-          onClick={() => setIsRecording(!isRecording)}
+          onClick={handleToggleRecord}
+          style={{ position: 'relative' }}
         >
           <Circle size={14} fill="currentColor" />
+          {isRecording && (
+            <span className="record-blink" style={{
+              position: 'absolute', top: '-2px', right: '-2px', 
+              width: '8px', height: '8px', borderRadius: '50%', 
+              backgroundColor: '#ff2d55', border: '2px solid white'
+            }}></span>
+          )}
         </button>
       </div>
 

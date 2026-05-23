@@ -8,12 +8,13 @@
 export type EngineCommand = 
   | { action: 'transport_play' }
   | { action: 'transport_stop' }
+  | { action: 'transport_record' }
   | { action: 'set_bpm', value: number }
-  | { action: 'show_plugin_window', track: number }
+  | { action: 'show_plugin_window', trackID?: string, track?: number }
   | { action: 'set_plugin_param', pluginName: string, paramID: string, value: number }
   | { action: 'show_audio_settings' }
   | { action: 'get_midi_inputs' }
-  | { action: 'set_track_input', trackIndex: number, deviceName: string };
+  | { action: 'set_track_input', trackID?: string, trackIndex?: number, deviceName: string };
 
 export class EngineService {
   private static instance: EngineService;
@@ -88,12 +89,20 @@ export class EngineService {
     this.sendCommand({ action: 'transport_stop' });
   }
 
+  public record() {
+    this.sendCommand({ action: 'transport_record' });
+  }
+
   public setBPM(bpm: number) {
     this.sendCommand({ action: 'set_bpm', value: bpm });
   }
 
-  public showPluginWindow(trackIndex: number) {
-    this.sendCommand({ action: 'show_plugin_window', track: trackIndex });
+  public showPluginWindow(trackID: string | number) {
+    if (typeof trackID === 'string') {
+      this.sendCommand({ action: 'show_plugin_window', trackID });
+    } else {
+      this.sendCommand({ action: 'show_plugin_window', track: trackID });
+    }
   }
 
   public showAudioSettings() {
@@ -104,8 +113,12 @@ export class EngineService {
     this.sendCommand({ action: 'get_midi_inputs' });
   }
 
-  public setTrackInput(trackIndex: number, deviceName: string) {
-    this.sendCommand({ action: 'set_track_input', trackIndex, deviceName });
+  public setTrackInput(trackID: string | number, deviceName: string) {
+    if (typeof trackID === 'string') {
+      this.sendCommand({ action: 'set_track_input', trackID, deviceName });
+    } else {
+      this.sendCommand({ action: 'set_track_input', trackIndex: trackID, deviceName });
+    }
   }
 
   private lastParamUpdateTimes: Record<string, number> = {};

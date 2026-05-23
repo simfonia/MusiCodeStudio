@@ -29,6 +29,7 @@
 - [x] **4OSC 濾波器校正**：實作雙重更新同步模式 (Dual Update Pattern)，解決掃頻無效問題 (2026-05-18 完成)
 - [x] **架構模組化重構**：抽離 <code>ParameterDispatcher</code>、<code>TrackManager</code>、<code>TransportController</code> 與 <code>RecordingController</code> (2026-05-23 完成)
 - [x] **錄音功能**：實作 MIDI Clip 的錄製流程與指令對接 (2026-05-23 完成)
+- [x] **錄音 UI 整合**：實作 Toolbar 錄音鈕、軌道武裝 (R) 按鈕與持久化 ID 渲染 (2026-05-23 完成)
 - [ ] **自定義 DSP 插件架構**：在 C++ 端建立可動態串接的 Plugin 容器
 - [ ] **Undo/Redo**： 系統初步架構 (基於 Command 模式)。
 - [ ] **DSP 模組庫**：實作基礎合成器元件 (VCO, VCF, VCA, ADSR)

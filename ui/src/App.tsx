@@ -20,14 +20,23 @@ function App() {
   const [filterFreq, setFilterFreq] = useState(0.5);
   
   // 模擬軌道資料 (後續可由 C++ 同步)
-  const [tracks] = useState([
-    { id: 1, name: 'Track 1 (4OSC)' }
+  const [tracks, setTracks] = useState([
+    { id: '1001', name: 'Track 1 (4OSC)' }
   ]);
 
   const engine = EngineService.getInstance();
 
   useEffect(() => {
     engine.setBPM(bpm);
+
+    // 監聽來自 C++ 的軌道列表同步
+    const handleTracksSync = (e: any) => {
+      if (e.detail && Array.isArray(e.detail)) {
+        setTracks(e.detail);
+      }
+    };
+    window.addEventListener('MusiCode_TracksList' as any, handleTracksSync);
+    return () => window.removeEventListener('MusiCode_TracksList' as any, handleTracksSync);
   }, [bpm]);
 
   const handleFilterChange = (val: number) => {

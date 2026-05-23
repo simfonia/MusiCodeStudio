@@ -3,14 +3,15 @@ import { ChevronDown, Zap } from 'lucide-react';
 import { EngineService } from '../services/EngineService';
 
 interface TrackHeaderProps {
-  trackIndex: number;
+  trackID: string;
   trackName: string;
   onShowPlugin: () => void;
 }
 
-const TrackHeader: React.FC<TrackHeaderProps> = ({ trackIndex, trackName, onShowPlugin }) => {
+const TrackHeader: React.FC<TrackHeaderProps> = ({ trackID, trackName, onShowPlugin }) => {
   const [selectedInput, setSelectedInput] = useState<string>('No Input');
   const [isMenuOpen, setIsInputMenuOpen] = useState(false);
+  const [isArmed, setIsArmed] = useState(false);
   const [midiDevices, setMidiDevices] = useState<{name: string, id: string}[]>([]);
   const [signalLevel, setSignalLevel] = useState(0);
   
@@ -20,15 +21,14 @@ const TrackHeader: React.FC<TrackHeaderProps> = ({ trackIndex, trackName, onShow
   // 監聽來自 C++ 的事件
   useEffect(() => {
     const handleMidiSignal = (e: any) => {
-      const { trackIndex: idx, level } = e.detail;
-      if (idx === trackIndex) {
+      const { trackID: id, level } = e.detail;
+      if (id === trackID) {
         setSignalLevel(level);
       }
     };
 
     const handleMidiInputs = (e: any) => {
       const devices = e.detail;
-      // 使用唯一的 ID 避免與後端設備名稱衝突
       setMidiDevices([{ name: 'All MIDI Ins', id: '__all_midi_ins__' }, ...devices]);
     };
 
@@ -39,7 +39,7 @@ const TrackHeader: React.FC<TrackHeaderProps> = ({ trackIndex, trackName, onShow
       window.removeEventListener('MusiCode_MidiSignal' as any, handleMidiSignal);
       window.removeEventListener('MusiCode_MidiInputsList' as any, handleMidiInputs);
     };
-  }, [trackIndex]);
+  }, [trackID]);
 
   // 點擊外部關閉選單
   useEffect(() => {
@@ -61,8 +61,22 @@ const TrackHeader: React.FC<TrackHeaderProps> = ({ trackIndex, trackName, onShow
 
   const handleSelectDevice = (deviceName: string) => {
     setSelectedInput(deviceName);
-    engine.setTrackInput(trackIndex, deviceName);
+    engine.setTrackInput(trackID, deviceName);
     setIsInputMenuOpen(false);
+    if (deviceName !== 'No Input') setIsArmed(true);
+  };
+
+  const toggleArm = () => {
+    const newArmedState = !isArmed;
+    setIsArmed(newArmedState);
+    if (newArmedState) {
+      // 預設武裝到 All MIDI Ins
+      setSelectedInput('All MIDI Ins');
+      engine.setTrackInput(trackID, 'All MIDI Ins');
+    } else {
+      setSelectedInput('No Input');
+      engine.setTrackInput(trackID, 'No Input');
+    }
   };
 
   return (
@@ -72,7 +86,18 @@ const TrackHeader: React.FC<TrackHeaderProps> = ({ trackIndex, trackName, onShow
         <div style={{ display: 'flex', gap: '4px' }}>
           <button className="view-btn" style={{ padding: '2px 6px', fontSize: '10px' }}>M</button>
           <button className="view-btn" style={{ padding: '2px 6px', fontSize: '10px' }}>S</button>
-          <button className="view-btn" style={{ padding: '2px 6px', fontSize: '10px', color: 'var(--danger)' }}>R</button>
+          <button 
+            className={`view-btn ${isArmed ? 'active' : ''}`} 
+            style={{ 
+              padding: '2px 6px', 
+              fontSize: '10px', 
+              color: isArmed ? 'white' : 'var(--danger)',
+              backgroundColor: isArmed ? 'var(--danger)' : 'transparent'
+            }}
+            onClick={toggleArm}
+          >
+            R
+          </button>
         </div>
       </div>
 
