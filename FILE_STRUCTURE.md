@@ -12,7 +12,9 @@ MusiCodeStudio/
 │   │   ├── Source/                    # 核心原始碼
 │   │   │   ├── Main.cpp               # 入口程式
 │   │   │   ├── MainWindow.cpp/h       # WebView2 與事件橋接
-│   │   │   ├── AudioEngine.cpp/h      # TE/Edit 核心管理
+│   │   │   ├── AudioEngine.cpp/h      # TE/Edit 核心管理 (委派中心)
+│   │   │   ├── TransportController.cpp/h # [新增] 播放與傳輸控制
+│   │   │   ├── RecordingController.cpp/h # [新增] 錄音狀態管理
 │   │   │   ├── ParameterDispatcher.h  # [核心] 參數派發與 Dual Update
 │   │   │   ├── TrackManager.h         # [核心] EditItemID 音軌定位
 │   │   │   ├── MidiController.cpp/h   # MIDI 路由與訊號監控

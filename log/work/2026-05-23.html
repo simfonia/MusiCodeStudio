@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>工作日誌 - 2026-05-23</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 1000px; margin: auto; background: #f4f4f4; }
+        .log-entry { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .status-done { color: green; font-weight: bold; }
+        .status-fix { color: orange; font-weight: bold; }
+        .status-refactor { color: blue; font-weight: bold; }
+        code { background: #eee; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+        pre { background: #2d2d2d; color: #ccc; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .tech-dive { background: #eef; border-left: 5px solid #33f; padding: 15px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="log-entry">
+        <h1>工作日誌 - 2026-05-23</h1>
+        
+        <h2>今日目標</h2>
+        <ul>
+            <li>研究 Tracktion Engine 錄音機制並完成實作計畫。</li>
+            <li>實作錄音功能模組化 (TransportController, RecordingController)。</li>
+            <li>重構 AudioEngine 與 CommandRouter 以整合新模組。</li>
+            <li>建立並執行自動化單元測試，驗證錄音 Clip 生成。</li>
+        </ul>
+
+        <h2>執行紀錄</h2>
+        <ul>
+            <li><span class="status-done">[Done]</span> 撰寫 <code>plans/recording_modular_impl.md</code> 計畫書。</li>
+            <li><span class="status-refactor">[Refactor]</span> 抽離 <code>TransportController</code>，封裝播放、停止與 BPM 控制邏輯。</li>
+            <li><span class="status-done">[Done]</span> 建立 <code>RecordingController</code>，實作 MIDI 錄製流程。</li>
+            <li><span class="status-refactor">[Refactor]</span> 重構 <code>AudioEngine</code>，將傳輸與錄音職責委派給新模組，減少主程式體積。</li>
+            <li><span class="status-fix">[Fix]</span> 更新 <code>CMakeLists.txt</code>，將新檔案納入編譯路徑。</li>
+            <li><span class="status-done">[Done]</span> 建立 <code>tests/RecordingModuleTestApp</code>，並實作「狀態機模式」自動化測試。</li>
+            <li><span class="status-done">[Done]</span> 透過 MIDI 注入技術，成功在無實體設備環境下驗證錄音邏輯 (PASS)。</li>
+        </ul>
+
+        <div class="tech-dive">
+            <h2>技術深挖 (Technical Deep Dive)</h2>
+            <h3>1. TransportControl::record(bool) 的武裝依賴</h3>
+            <p>錄音啟動的前提是目標軌道必須有 <code>InputDeviceInstance</code> 且 <code>isRecordingEnabled</code> 為 true。在模組化開發中，我們確保 <code>MidiController</code> 負責路由與武裝，而 <code>RecordingController</code> 僅負責觸發狀態切換。</p>
+
+            <h3>2. 測試環境中的非同步初始化</h3>
+            <p>在自動化測試中，<code>ensureContextAllocated()</code> 是非同步的。若立即檢查設備實例會得到空結果。採用「狀態機」每 500ms 檢查一次狀態，能有效解決 Headless 環境下的初始化競爭問題。</p>
+            
+            <h3>3. MIDI 注入 (Injection) 驗證</h3>
+            <p>使用 <code>engine.getDeviceManager().injectMIDIMessageToDefaultDevice()</code> 可以在硬體層級模擬輸入事件。這是驗證錄音邏輯最完整的方式，因為它會走完從輸入設備 -> 軌道路由 -> 錄音緩衝區 -> 生成 Clip 的完整路徑。</p>
+        </div>
+
+        <h2>下次啟動方向 (Next Steps)</h2>
+        <ul>
+            <li>實作自定義 DSP 插件架構 (PluginRack 底層)。</li>
+            <li>前端對接錄音按鈕狀態同步 (isRecording)。</li>
+            <li>研究 <code>UndoManager</code> 在錄音生成 Clip 後的自動交易紀錄。</li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -19,6 +19,11 @@ void CommandRouter::registerHandlers()
         updateStatus("MusiCode Engine: STOPPED", juce::Colours::red);
     };
 
+    commandHandlers["transport_record"] = [this](const juce::var&) {
+        audioEngine.record();
+        updateStatus("MusiCode Engine: RECORDING...", juce::Colours::orange);
+    };
+
     commandHandlers["set_bpm"] = [this](const juce::var& params) {
         double bpm = params.getProperty("value", 120.0);
         audioEngine.setBpm(bpm);

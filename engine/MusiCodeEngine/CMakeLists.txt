@@ -29,6 +29,10 @@ target_sources(MusiCodeEngine PRIVATE
     Source/MainWindow.cpp
     Source/AudioEngine.h
     Source/AudioEngine.cpp
+    Source/TransportController.h
+    Source/TransportController.cpp
+    Source/RecordingController.h
+    Source/RecordingController.cpp
     Source/PluginController.h
     Source/PluginController.cpp
     Source/MidiController.h

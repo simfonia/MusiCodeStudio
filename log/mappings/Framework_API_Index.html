@@ -120,11 +120,25 @@ auto* track = MusiCode::TrackManager::findAudioTrackByID(edit, trackID);
 
 // 獲取所有音軌資訊 (供前端渲染同步)
 juce::var tracksJson = MusiCode::TrackManager::getTracksInfo(edit);
+
+// [新增] 模組化傳輸與錄音控制 (Modular Transport & Recording)
+// 播放與定位
+audioEngine.getTransportController().play(false); // false = 不循環
+audioEngine.getTransportController().setPosition(tracktion::TimePosition::fromSeconds(2.0));
+
+// 錄音流程 (依照手冊 [3. 播放與傳輸])
+if (audioEngine.getRecordingController().isArmed(trackID))
+    audioEngine.getRecordingController().startRecording();
+
+// 停止並儲存 (生成 Clip)
+audioEngine.getRecordingController().stopAndSave();
             </div>
             <div class="note">
                 <b>本專案關鍵點：</b> 
                 <ul>
                     <li><b>初始化順序：</b> 必須先呼叫 <code>ensureContextAllocated()</code>，否則無法獲取有效的 <code>InputDeviceInstance</code>。</li>
+                    <li><b>錄音核心：</b> 呼叫 <code>transport.record(false)</code> 啟動。停止時需呼叫 <code>stop(false, false)</code> 才能保留 Clip。</li>
+                    <li><b>武裝狀態：</b> 錄音前必須確保軌道已透過 <code>setRecordingEnabled(true)</code> 開啟武裝。</li>
                     <li><b>濾波器陷阱：</b> 直接將 0-1 寫入 4OSC 的 <code>filterFreq</code> 會被視為 Hz，導致靜音。必須進行範圍轉換。</li>
                     <li><b>執行緒規範：</b> 參數異動必須在 <b>Message Thread</b> 執行。<code>ParameterDispatcher</code> 已內建 <code>callAsync</code> 處理。</li>
                     <li><b>ID 轉換：</b> <code>EditItemID::fromString()</code> 用於解析前端傳回的 ID 字串。</li>

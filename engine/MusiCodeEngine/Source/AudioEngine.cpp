@@ -25,6 +25,10 @@ AudioEngine::AudioEngine()
 
     pluginController = std::make_unique<PluginController>(*edit, engine);
     midiController = std::make_unique<MidiController>(*edit, engine);
+    
+    // 初始化新控制器
+    transportController = std::make_unique<MusiCode::TransportController>(*edit);
+    recordingController = std::make_unique<MusiCode::RecordingController>(*edit, *transportController);
 
     setupTestScene();
 }
@@ -34,7 +38,7 @@ void AudioEngine::setupTestScene()
     using namespace tracktion_engine;
     DBG("setupTestScene: Starting...");
     
-    edit->getTransport().ensureContextAllocated();
+    transportController->getTransport().ensureContextAllocated();
 
     // --- 修正：優先使用現有軌道，避免 Index 偏移 ---
     auto audioTracks = getAudioTracks(*edit);
@@ -91,7 +95,7 @@ void AudioEngine::setupTestScene()
         }
     }
     
-    edit->getTransport().setPosition(tracktion::TimePosition::fromSeconds(0.0));
+    transportController->setPosition(tracktion::TimePosition::fromSeconds(0.0));
 }
 
 AudioEngine::~AudioEngine()
@@ -101,45 +105,40 @@ AudioEngine::~AudioEngine()
 
 void AudioEngine::play()
 {
-    juce::MessageManager::callAsync([this]() {
-        if (edit != nullptr)
-        {
-            auto& transport = edit->getTransport();
-            if (transport.getPosition() >= tracktion::toPosition(edit->getLength()))
-                transport.setPosition(tracktion::TimePosition::fromSeconds(0.0));
-            transport.play(false);
-        }
-    });
+    transportController->play();
 }
 
 void AudioEngine::stop()
 {
-    juce::MessageManager::callAsync([this]() {
-        if (edit != nullptr)
-        {
-            auto& transport = edit->getTransport();
-            transport.stop(false, false);
-            transport.setPosition(tracktion::TimePosition::fromSeconds(0.0));
-        }
-    });
+    if (recordingController->isRecording())
+        recordingController->stopAndSave();
+    else
+        transportController->stop();
+}
+
+void AudioEngine::record()
+{
+    recordingController->startRecording();
 }
 
 bool AudioEngine::isPlaying() const
 {
-    return edit != nullptr && edit->getTransport().isPlaying();
+    return transportController->isPlaying();
+}
+
+bool AudioEngine::isRecording() const
+{
+    return recordingController->isRecording();
 }
 
 void AudioEngine::setBpm(double newBpm)
 {
-    if (edit != nullptr)
-        edit->tempoSequence.getTempoAt(tracktion::TimePosition()).setBpm(newBpm);
+    transportController->setBpm(newBpm);
 }
 
 double AudioEngine::getBpm() const
 {
-    if (edit != nullptr)
-        return edit->tempoSequence.getTempoAt(tracktion::TimePosition()).getBpm();
-    return 120.0;
+    return transportController->getBpm();
 }
 
 void AudioEngine::setPluginParameter(juce::String pluginName, juce::String paramID, float newValue)
