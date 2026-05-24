@@ -37,7 +37,8 @@ void MidiController::refreshDevices()
     
     for (auto midiIn : dm.getMidiInDevices())
     {
-        midiIn->setMonitorMode(te::InputDevice::MonitorMode::on);
+        // 預設關閉全域監聽，由 setTrackInput 決定
+        midiIn->setMonitorMode(te::InputDevice::MonitorMode::off);
         midiIn->setEnabled(true);
     }
 }
@@ -63,25 +64,32 @@ bool MidiController::setTrackInput(te::EditItemID trackID, const juce::String& d
     auto track = MusiCode::TrackManager::findAudioTrackByID(edit, trackID);
     if (track == nullptr) return false;
 
-    edit.getTransport().ensureContextAllocated();
-
     bool success = false;
     for (auto instance : edit.getAllInputDevices())
     {
-        if (instance->getInputDevice().getDeviceType() == te::InputDevice::physicalMidiDevice)
+        if (instance->getInputDevice().getDeviceType() == te::InputDevice::physicalMidiDevice ||
+            instance->getInputDevice().getDeviceType() == te::InputDevice::virtualMidiDevice)
         {
             if (deviceName == "All MIDI Ins" || instance->getInputDevice().getName() == deviceName)
             {
+                // 設定目標軌道，並開啟武裝
                 (void)instance->setTarget(track->itemID, true, &edit.getUndoManager(), 0);
                 (void)instance->setRecordingEnabled(track->itemID, true);
+                
+                // 開啟監控，確保彈奏時有聲音
+                instance->getInputDevice().setMonitorMode(te::InputDevice::MonitorMode::on);
                 success = true;
             }
             else if (te::isOnTargetTrack(*instance, *track, 0))
             {
+                // 若原本是指向這軌但現在要更換，則取消舊的武裝
                 (void)instance->setTarget(te::EditItemID(), false, nullptr, 0);
             }
         }
     }
+    
+    // 關鍵：在所有路由變更後重新分配上下文，使錄音武裝生效
+    edit.getTransport().ensureContextAllocated();
     
     return success;
 }

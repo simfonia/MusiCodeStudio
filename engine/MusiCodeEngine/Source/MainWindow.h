@@ -4,6 +4,8 @@
 #include "HttpServer.h"
 #include "CommandRouter.h"
 
+#include "WebController.h"
+
 /**
  * MainComponent - 承載所有 UI 元素的容器
  */
@@ -11,20 +13,19 @@ class MainComponent : public juce::Component
 {
 public:
     MainComponent(AudioEngine& engine);
+    void paint(juce::Graphics& g) override;
     void resized() override;
     juce::Label& getStatusLabel() { return statusLabel; }
     
     // 彈出音訊設定對話框
     void showAudioSettings();
 
-    /** 向前端發送非同步事件 */
-    void sendEventToJS(const juce::String& eventName, const juce::var& data);
-
 private:
     AudioEngine& audioEngine;
     juce::Label statusLabel;
-    std::unique_ptr<juce::WebBrowserComponent> webBrowser;
     std::unique_ptr<CommandRouter> router;
+    std::unique_ptr<MusiCode::WebController> webController;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };
 

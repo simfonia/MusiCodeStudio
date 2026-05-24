@@ -25,8 +25,19 @@ namespace MusiCode
             auto& transport = transportController.getTransport();
             if (transport.isRecording())
             {
-                // 依照研究結果：stop(false, false) 代表 discardRecordings = false
+                // 1. 停止錄製
                 transport.stop(false, false);
+                
+                // 2. [關鍵] 強制引擎重新掃描內容，確保新 Clip 立即生效
+                transport.ensureContextAllocated();
+                
+                // 3. 徹底重置狀態機
+                transport.stop(false, true);
+
+                // 4. 自動將播放頭移回 0，方便立即試聽
+                transport.setPosition(tracktion::TimePosition::fromSeconds(0.0));
+                
+                DBG("RecordingController: Context Rebuilt and Playhead Resetted.");
             }
         });
     }
@@ -37,8 +48,9 @@ namespace MusiCode
             auto& transport = transportController.getTransport();
             if (transport.isRecording())
             {
-                // stop(true, false) 代表捨棄錄音
                 transport.stop(true, false);
+                transport.stop(false, true); // 徹底重置
+                DBG("RecordingController: Recording Discarded. Transport state reset.");
             }
         });
     }

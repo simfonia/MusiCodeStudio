@@ -1,5 +1,6 @@
 #include "AudioEngine.h"
 #include "ParameterDispatcher.h"
+#include "TrackManager.h"
 #include <iostream>
 
 namespace te = tracktion_engine;
@@ -30,7 +31,20 @@ AudioEngine::AudioEngine()
     transportController = std::make_unique<MusiCode::TransportController>(*edit);
     recordingController = std::make_unique<MusiCode::RecordingController>(*edit, *transportController);
 
+    // 關閉節拍器，防止 Issue 1 的測試音
+    edit->clickTrackEnabled = false;
+
     setupTestScene();
+    startTimer(1000); // 縮短為 1 秒同步一次，增加響應速度
+}
+
+void AudioEngine::timerCallback()
+{
+    if (tracksChangedCallback != nullptr && edit != nullptr)
+    {
+        auto json = MusiCode::TrackManager::getTracksInfo(*edit);
+        tracksChangedCallback(json);
+    }
 }
 
 void AudioEngine::setupTestScene()
@@ -82,19 +96,7 @@ void AudioEngine::setupTestScene()
 
             DBG("setupTestScene: 4OSC Initialized via ParameterDispatcher");
         }
-
-        // --- 補回 MIDI Clip 建立 (解決 Play 無聲) ---
-        auto clip = audioTrack->insertMIDIClip({ tracktion::TimePosition::fromSeconds(0.0), tracktion::TimePosition::fromSeconds(60.0) }, nullptr);
-        if (auto midiClip = dynamic_cast<MidiClip*>(clip.get()))
-        {
-            // 加入一連串長音
-            midiClip->getSequence().addNote(60, tracktion::BeatPosition::fromBeats(0.0), tracktion::BeatDuration::fromBeats(4.0), 100, 0, nullptr);
-            midiClip->getSequence().addNote(64, tracktion::BeatPosition::fromBeats(4.0), tracktion::BeatDuration::fromBeats(4.0), 100, 0, nullptr);
-            midiClip->getSequence().addNote(67, tracktion::BeatPosition::fromBeats(8.0), tracktion::BeatDuration::fromBeats(4.0), 100, 0, nullptr);
-            DBG("setupTestScene: MIDI Test Clip Created");
-        }
     }
-    
     transportController->setPosition(tracktion::TimePosition::fromSeconds(0.0));
 }
 
@@ -111,9 +113,13 @@ void AudioEngine::play()
 void AudioEngine::stop()
 {
     if (recordingController->isRecording())
+    {
         recordingController->stopAndSave();
+    }
     else
+    {
         transportController->stop();
+    }
 }
 
 void AudioEngine::record()

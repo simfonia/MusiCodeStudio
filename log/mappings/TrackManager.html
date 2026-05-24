@@ -32,15 +32,28 @@
 
         <div class="method">
             <h3><code>getTracksInfo(te::Edit& edit)</code></h3>
-            <p>返回一個 <code>juce::var</code> (Array of Objects)，包含所有音軌的 ID、名稱與當前索引，供前端渲染軌道列表。</p>
+            <p>返回一個 <code>juce::var</code> (Array of Objects)，包含所有音軌的 ID、名稱與當前索引，並自動遍歷軌道內的 Clips，提取 ID、開始位置、長度與類型 (MIDI/Audio) 供前端 ArrangementView 渲染。</p>
         </div>
 
         <h2>範例代碼</h2>
-        <pre>
-// 前端傳來指令 { "action": "...", "trackID": "1001" }
-auto id = MusiCode::TrackManager::stringToID(params["trackID"]);
-auto* track = MusiCode::TrackManager::findAudioTrackByID(edit, id);
-        </pre>
+        <h2>API 對照表 (2026-05-24 更新)</h2>
+        <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <tr style="background: #eee;">
+                <th style="padding: 8px;">函數 / 指令</th>
+                <th style="padding: 8px;">輸出屬性</th>
+                <th style="padding: 8px;">備註</th>
+            </tr>
+            <tr>
+                <td style="padding: 8px;"><code>getTracksInfo</code></td>
+                <td style="padding: 8px;"><code>startBeat</code>, <code>lengthBeat</code>, <code>notes</code> (雲圖)</td>
+                <td style="padding: 8px;">用於 ArrangementView 拍點網格渲染。</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px;"><code>get_clip_notes</code></td>
+                <td style="padding: 8px;"><code>pitch</code>, <code>start</code>, <code>length</code> (詳細音符)</td>
+                <td style="padding: 8px;">支援點擊 Clip 後載入鋼琴捲軸。</td>
+            </tr>
+        </table>
     </div>
 </body>
 </html>

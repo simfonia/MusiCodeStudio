@@ -12,6 +12,9 @@ const TrackList: React.FC<TrackListProps> = ({ tracks }) => {
 
   return (
     <aside className="track-list">
+      {/* --- [修正] 對齊右側 (視圖切換 40px + 時間標尺 30px = 70px) --- */}
+      <div style={{ height: '70px', borderBottom: '1px solid var(--border)', background: 'var(--bg-app)' }}></div>
+      
       {tracks.map((track) => (
         <TrackHeader 
           key={track.id}

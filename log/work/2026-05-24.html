@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>工作日誌 - 2026-05-24 | MusiCodeStudio</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        h1 { color: #007aff; border-bottom: 2px solid #007aff; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; border-left: 5px solid #007aff; padding-left: 10px; }
+        .tag { display: inline-block; background: #e1f0ff; color: #007aff; padding: 2px 8px; border-radius: 4px; font-size: 0.9em; margin-right: 5px; }
+        .bug { background: #ffe1e1; color: #d70000; }
+        .feat { background: #e1ffe1; color: #008000; }
+        pre { background: #f5f5f7; padding: 15px; border-radius: 8px; overflow-x: auto; border: 1px solid #e1e1e3; }
+        code { font-family: 'Consolas', monospace; }
+        .metric { color: #86868b; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1>工作日誌 - 2026-05-24</h1>
+    <p class="metric">狀態：核心功能全鏈路連通 | 渲染問題徹底解決</p>
+
+    <h2>1. 重大功能實作 <span class="tag feat">Feature</span></h2>
+    <ul>
+        <li><strong>拍點網格系統 (Beat Grid)</strong>：
+            <ul>
+                <li>在 <code>ArrangementView.tsx</code> 實作基於小節.拍點 (Bar.Beat) 的標尺。</li>
+                <li>後端 <code>TrackManager.h</code> 擴充 <code>startBeat</code> 與 <code>lengthBeat</code> 元數據，確保音樂對齊。</li>
+            </ul>
+        </li>
+        <li><strong>鋼琴捲軸連動 (Piano Roll Linkage)</strong>：
+            <ul>
+                <li>實作編曲視圖 Clip 點擊事件，觸發 <code>get_clip_notes</code> 指令。</li>
+                <li>前端自動跳轉視圖並載入詳細音符數據，完成「錄音 -> 編曲 -> 編輯」工作流。</li>
+            </ul>
+        </li>
+        <li><strong>強健通訊機制 (Robust IPC)</strong>：
+            <ul>
+                <li><code>EngineService.ts</code> 實作多路徑路徑偵測 (JUCE Native Bridge / HTTP Fallback)。</li>
+                <li>解決因 WebView2 路徑異動導致的 MIDI 設備與設定視窗消失問題。</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>2. 關鍵問題診斷與修復 <span class="tag bug">Bug Fix</span></h2>
+    <ul>
+        <li><strong>WebView2 黑畫面與渲染崩潰</strong>：
+            <p><strong>現象：</strong> 出現 <code>80004002 (E_NOINTERFACE)</code> 錯誤，畫面呈現黑色或彈出下載錯誤。</p>
+            <p><strong>診斷：</strong> 系統更新與重啟修復了底層 GPU/WARP 衝突。代碼端加入「3 秒啟動禁運期」與「GPU 停用參數」作為防禦性設計。</p>
+            <p><strong>最終方案：</strong> 恢復至標準原生模式 (Hardware Accelerated)，保留注入守衛以確保載入穩定性。</p>
+        </li>
+        <li><strong>錄音後靜音與播放卡頓</strong>：
+            <p><strong>修復：</strong> 在停止錄音後強制呼叫 <code>ensureContextAllocated()</code> 重建音訊圖表，並呼叫 <code>setPosition(0)</code> 歸位，消除 8 秒延遲。</p>
+        </li>
+    </ul>
+
+    <h2>3. 技術深挖 (Technical Deep Dive) <span class="tag">Refactor</span></h2>
+    <ul>
+        <li><strong>模組化 Web 控制器</strong>：
+            <p>建立了 <code>WebController.h</code>，將 WebView2 的繁瑣配置、JS 事件發送、注入守衛邏輯從 <code>MainWindow.cpp</code> 中抽離。這大幅提升了主視窗代碼的可維護性。</p>
+        </li>
+        <li><strong>Konva 顏色渲染限制</strong>：
+            <p>發現 Konva <code>Rect</code> 不支援 CSS 變數，必須硬編碼 Hex 顏色，解決了錄音色塊顯示為黑色的問題。</p>
+        </li>
+    </ul>
+
+    <h2>4. 下次啟動方向 (Next Steps)</h2>
+    <ul>
+        <li>實作<strong>混音器面板 (Mixer)</strong>，提供 Volume Fader 與 Mute/Solo 控制。</li>
+        <li>開發<strong>自定義 DSP 插件容器</strong>，支援動態串接多個效果器。</li>
+        <li>強化鋼琴捲軸的<strong>互動編輯</strong>（滑鼠新增/移動音符）。</li>
+    </ul>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Music, Keyboard, Layout, Waves } from 'lucide-react';
 import './App.css';
 
@@ -10,19 +10,21 @@ import PluginRack from './components/PluginRack';
 import BlocklyView from './views/BlocklyView';
 import PianoRollView from './views/PianoRollView';
 import StaffView from './views/StaffView';
+import ArrangementView from './views/ArrangementView';
 
-type ViewMode = 'staff' | 'piano' | 'blockly' | 'audio';
+type ViewMode = 'arrangement' | 'staff' | 'piano' | 'blockly' | 'audio';
 
 function App() {
-  const [viewMode, setViewMode] = useState<ViewMode>('piano');
+  const [viewMode, setViewMode] = useState<ViewMode>('arrangement');
   const [bpm, setBpm] = useState(120);
   const [isRecording, setIsRecording] = useState(false);
   const [filterFreq, setFilterFreq] = useState(0.5);
   
   // 模擬軌道資料 (後續可由 C++ 同步)
-  const [tracks, setTracks] = useState([
-    { id: '1001', name: 'Track 1 (4OSC)' }
+  const [tracks, setTracks] = useState<any[]>([
+    { id: '1001', name: 'Track 1 (4OSC)', clips: [] }
   ]);
+  const [selectedClipNotes, setSelectedClipNotes] = useState<any[]>([]);
 
   const engine = EngineService.getInstance();
 
@@ -32,12 +34,32 @@ function App() {
     // 監聽來自 C++ 的軌道列表同步
     const handleTracksSync = (e: any) => {
       if (e.detail && Array.isArray(e.detail)) {
+        console.log('[App] Tracks Sync:', e.detail);
         setTracks(e.detail);
       }
     };
+
+    // 監聽來自 C++ 的音符詳情 (點擊 Clip 後觸發)
+    const handleClipNotesSync = (e: any) => {
+      if (e.detail && e.detail.notes && Array.isArray(e.detail.notes)) {
+        setSelectedClipNotes(e.detail.notes);
+        setViewMode('piano'); // 自動切換到鋼琴捲軸
+      }
+    };
+
     window.addEventListener('MusiCode_TracksList' as any, handleTracksSync);
-    return () => window.removeEventListener('MusiCode_TracksList' as any, handleTracksSync);
+    window.addEventListener('MusiCode_ClipNotesList' as any, handleClipNotesSync);
+    
+    return () => {
+      window.removeEventListener('MusiCode_TracksList' as any, handleTracksSync);
+      window.removeEventListener('MusiCode_ClipNotesList' as any, handleClipNotesSync);
+    };
   }, [bpm]);
+
+  const handleSelectClip = (clipID: string) => {
+    console.log('[App] Selecting Clip:', clipID);
+    engine.getClipNotes(clipID);
+  };
 
   const handleFilterChange = (val: number) => {
     setFilterFreq(val);
@@ -58,6 +80,9 @@ function App() {
 
         <section className="editor-container">
           <nav className="view-selector">
+            <button className={`view-btn ${viewMode === 'arrangement' ? 'active' : ''}`} onClick={() => setViewMode('arrangement')}>
+              <Layout size={14} style={{ marginRight: '5px' }} /> 編曲
+            </button>
             <button className={`view-btn ${viewMode === 'staff' ? 'active' : ''}`} onClick={() => setViewMode('staff')}>
               <Music size={14} style={{ marginRight: '5px' }} /> 五線譜
             </button>
@@ -73,7 +98,10 @@ function App() {
           </nav>
 
           <div className="canvas-area">
-            {viewMode === 'piano' && <PianoRollView />}
+            {viewMode === 'arrangement' && (
+              <ArrangementView tracks={tracks} bpm={bpm} onSelectClip={handleSelectClip} />
+            )}
+            {viewMode === 'piano' && <PianoRollView notes={selectedClipNotes} />}
             {viewMode === 'blockly' && <BlocklyView />}
             {viewMode === 'staff' && <StaffView />}
             {viewMode === 'audio' && (

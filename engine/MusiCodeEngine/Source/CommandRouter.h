@@ -21,7 +21,14 @@ public:
     void processCommand(const juce::var& json);
 
     void setAudioSettingsCallback(AudioSettingsCallback callback) { audioSettingsCallback = callback; }
-    void setEventCallback(EventCallback callback) { eventCallback = callback; }
+    void setEventCallback(EventCallback callback) 
+    { 
+        eventCallback = callback; 
+        audioEngine.setTracksChangedCallback([this](const juce::var& json) {
+            if (eventCallback != nullptr)
+                eventCallback("tracks_list", json);
+        });
+    }
 
 private:
     void registerHandlers();

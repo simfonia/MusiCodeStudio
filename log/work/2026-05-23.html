@@ -39,6 +39,11 @@
             <li><span class="status-done">[Done]</span> 實作 <code>Toolbar</code> 錄音按鈕，支援 <code>transport_record</code> 指令與視覺動畫。</li>
             <li><span class="status-done">[Done]</span> 實作 <code>TrackHeader</code> 武裝 (R) 按鈕，支援持久化 <code>trackID</code> 定位。</li>
             <li><span class="status-refactor">[Refactor]</span> 前端 <code>EngineService</code> 全面遷移至持久化 ID 系統，對齊 C++ 端。</li>
+            <li><span class="status-done">[Done]</span> 擴充 <code>TrackManager</code> 與 <code>CommandRouter</code>，支援提取 Clip 元數據與音符詳細資料 (<code>get_clip_notes</code>)。</li>
+            <li><span class="status-done">[Done]</span> 實作 <code>AudioEngine</code> 自動同步定時器 (500ms)，確保前端即時獲取錄音生成的 Clip。</li>
+            <li><span class="status-done">[Done]</span> 實作 <code>ArrangementView.tsx</code> 編曲視圖，使用 Konva.js 渲染音軌色塊。</li>
+            <li><span class="status-fix">[Fix]</span> 修復後端編譯錯誤 (Clip 類型判斷與語法相容性問題)。</li>
+            <li><span class="status-fix">[Fix]</span> 修復前端編譯錯誤 (Blockly 事件類型轉換與冗餘代碼清理)。</li>
         </ul>
 
         <div class="tech-dive">
@@ -51,6 +56,18 @@
             
             <h3>3. MIDI 注入 (Injection) 驗證</h3>
             <p>使用 <code>engine.getDeviceManager().injectMIDIMessageToDefaultDevice()</code> 可以在硬體層級模擬輸入事件。這是驗證錄音邏輯最完整的方式，因為它會走完從輸入設備 -> 軌道路由 -> 錄音緩衝區 -> 生成 Clip 的完整路徑。</p>
+
+            <h3>4. 後端數據推播 (Push) vs 拉取 (Pull)</h3>
+            <p>為了確保 Clip 生成後的即時性，我們選擇在 <code>AudioEngine</code> 層實作 Timer 定時推播。雖然增加了少量通訊開銷，但解決了錄音非同步結束後前端無法得知狀態的問題。配合 <code>EditItemID</code> 持久化系統，實現了音軌狀態的無縫同步。</p>
+
+            <h3>5. 錄音流程除錯總結 (Bug Fixes)</h3>
+            <p>針對用戶報告的錄音失敗與測試音問題，最終診斷結論如下：
+                <ul>
+                    <li><b>測試音來源</b>：<code>setupTestScene</code> 殘留的 MIDI Clip 與全域 MonitorMode 開啟所致。修正：移除測試 Clip 並將全域 MonitorMode 設為 OFF。</li>
+                    <li><b>錄音失敗來源</b>：在變更武裝狀態後未立即呼叫 <code>ensureContextAllocated()</code>，導致引擎未刷新路由。修正：在 <code>setTrackInput</code> 完成後立即強制刷新上下文。</li>
+                    <li><b>同步來源</b>：錄音停止後需即時推播。修正：在 <code>stopAndSave</code> 後增加一次性 100ms 延遲同步。</li>
+                </ul>
+            </p>
         </div>
 
         <h2>下次啟動方向 (Next Steps)</h2>

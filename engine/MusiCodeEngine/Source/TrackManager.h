@@ -39,7 +39,7 @@ namespace MusiCode
             return {};
         }
 
-        /** 獲取所有音軌資訊供前端使用 */
+        /** 獲取所有音軌資訊供前端使用 (包含 Clip 元數據) */
         static juce::var getTracksInfo(tracktion_engine::Edit& edit)
         {
             juce::Array<juce::var> trackList;
@@ -49,6 +49,52 @@ namespace MusiCode
                 obj->setProperty("id", track->itemID.toString());
                 obj->setProperty("name", track->getName());
                 obj->setProperty("index", track->getIndexInEditTrackList());
+                
+                // --- 提取 Clip 資訊 ---
+                juce::Array<juce::var> clips;
+                for (auto clip : track->getClips())
+                {
+                    juce::DynamicObject::Ptr clipObj = new juce::DynamicObject();
+                    clipObj->setProperty("id", clip->itemID.toString());
+                    clipObj->setProperty("start", clip->getPosition().getStart().inSeconds());
+                    clipObj->setProperty("length", clip->getPosition().getLength().inSeconds());
+                    
+                    // --- [新增] 拍點元數據 ---
+                    auto& tempoSeq = edit.tempoSequence;
+                    double startBeat = tempoSeq.toBeats(clip->getPosition().getStart()).inBeats();
+                    double endBeat = tempoSeq.toBeats(clip->getPosition().getEnd()).inBeats();
+                    clipObj->setProperty("startBeat", startBeat);
+                    clipObj->setProperty("lengthBeat", endBeat - startBeat);
+                    
+                    bool isMidi = (dynamic_cast<tracktion_engine::MidiClip*>(clip) != nullptr);
+                    clipObj->setProperty("type", isMidi ? "midi" : "audio");
+
+                    // --- [恢復] 提取音符預覽 (用於 ArrangementView 繪製) ---
+                    if (isMidi)
+                    {
+                        if (auto midiClip = dynamic_cast<tracktion_engine::MidiClip*>(clip))
+                        {
+                            juce::Array<juce::var> previewNotes;
+                            auto& sequence = midiClip->getSequence();
+                            int count = 0;
+                            for (auto* note : sequence.getNotes())
+                            {
+                                if (count++ > 50) break; // 限制預覽數量，防止 JSON 爆炸
+                                
+                                juce::DynamicObject::Ptr nObj = new juce::DynamicObject();
+                                nObj->setProperty("pitch", note->getNoteNumber());
+                                nObj->setProperty("start", note->getStartBeat().inBeats());
+                                nObj->setProperty("len", note->getLengthBeats().inBeats());
+                                previewNotes.add(nObj.get());
+                            }
+                            clipObj->setProperty("notes", previewNotes);
+                        }
+                    }
+                    
+                    clips.add(clipObj.get());
+                }
+                obj->setProperty("clips", clips);
+                
                 trackList.add(obj.get());
             }
             return trackList;

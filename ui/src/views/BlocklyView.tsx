@@ -59,7 +59,7 @@ const BlocklyView: React.FC = () => {
       });
 
       // 3. 掛載即時連動監聽器
-      workspace.current.addChangeListener((event) => {
+      workspace.current.addChangeListener((event: any) => {
         // 捕捉數值變更事件 (Blockly.Events.BLOCK_CHANGE)
         if (event.type === Blockly.Events.BLOCK_CHANGE) {
           const block = workspace.current?.getBlockById(event.blockId || '');

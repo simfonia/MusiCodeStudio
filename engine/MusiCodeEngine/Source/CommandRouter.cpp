@@ -67,6 +67,48 @@ void CommandRouter::registerHandlers()
              eventCallback("tracks_list", json);
     };
 
+    commandHandlers["get_clip_notes"] = [this](const juce::var& params) {
+        juce::String clipIDStr = params.getProperty("clipID", "").toString();
+        auto clipID = tracktion_engine::EditItemID::fromString(clipIDStr);
+        
+        juce::Array<juce::var> noteList;
+        bool found = false;
+        
+        for (auto track : tracktion_engine::getAudioTracks(audioEngine.getEdit()))
+        {
+            for (auto clip : track->getClips())
+            {
+                if (clip->itemID == clipID)
+                {
+                    if (auto midiClip = dynamic_cast<tracktion_engine::MidiClip*>(clip))
+                    {
+                        auto& sequence = midiClip->getSequence();
+                        for (auto* note : sequence.getNotes())
+                        {
+                            juce::DynamicObject::Ptr noteObj = new juce::DynamicObject();
+                            noteObj->setProperty("pitch", note->getNoteNumber());
+                            noteObj->setProperty("start", note->getStartBeat().inBeats());
+                            noteObj->setProperty("length", note->getLengthBeats().inBeats());
+                            noteObj->setProperty("velocity", (int)note->getVelocity());
+                            noteList.add(noteObj.get());
+                        }
+                    }
+                    found = true;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+        
+        if (eventCallback != nullptr)
+        {
+            juce::DynamicObject::Ptr result = new juce::DynamicObject();
+            result->setProperty("clipID", clipIDStr);
+            result->setProperty("notes", noteList);
+            eventCallback("clip_notes_list", result.get());
+        }
+    };
+
     commandHandlers["set_track_input"] = [this](const juce::var& params) {
         tracktion_engine::EditItemID trackID;
         

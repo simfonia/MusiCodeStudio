@@ -1,5 +1,4 @@
 import React from 'react';
-import { EngineService } from '../services/EngineService';
 
 interface PluginRackProps {
   filterFreq: number;

@@ -10,6 +10,8 @@ export type EngineCommand =
   | { action: 'transport_stop' }
   | { action: 'transport_record' }
   | { action: 'set_bpm', value: number }
+  | { action: 'get_tracks' }
+  | { action: 'get_clip_notes', clipID: string }
   | { action: 'show_plugin_window', trackID?: string, track?: number }
   | { action: 'set_plugin_param', pluginName: string, paramID: string, value: number }
   | { action: 'show_audio_settings' }
@@ -32,13 +34,20 @@ export class EngineService {
   }
 
   private handleEngineEvent(event: { type: string, detail: any }) {
-    console.log(`[EngineService] Received Event: ${event.type}`, event.detail);
+    // 僅對重要事件進行 Log，避免 tracks_list 灌爆 Console
+    if (event.type !== 'tracks_list' && event.type !== 'midi_signal') {
+      console.log(`[EngineService] Received Event: ${event.type}`, event.detail);
+    }
     
     // 這裡可以觸發自定義的回呼或 RxJS Subject
     if (event.type === 'midi_signal') {
       window.dispatchEvent(new CustomEvent('MusiCode_MidiSignal', { detail: event.detail }));
     } else if (event.type === 'midi_inputs_list') {
       window.dispatchEvent(new CustomEvent('MusiCode_MidiInputsList', { detail: event.detail }));
+    } else if (event.type === 'tracks_list') {
+      window.dispatchEvent(new CustomEvent('MusiCode_TracksList', { detail: event.detail }));
+    } else if (event.type === 'clip_notes_list') {
+      window.dispatchEvent(new CustomEvent('MusiCode_ClipNotesList', { detail: event.detail }));
     }
   }
 
@@ -49,35 +58,46 @@ export class EngineService {
     return EngineService.instance;
   }
 
-  /**
-   * 發送指令到 C++ 引擎 (優先使用 Native IPC，無則降級為 HTTP)
-   */
   public async sendCommand(command: EngineCommand) {
-    if (this.isNativeMode) {
-      try {
-        const juce = (window as any).__JUCE__;
-        if (juce && juce.backend && typeof juce.backend.emitEvent === 'function') {
+    const win = window as any;
+    const commandStr = JSON.stringify(command);
+
+    // 1. 嘗試最直接的 JUCE 8 全域函數 (withNativeFunction 預設行為)
+    if (typeof win.postToBackend === 'function') {
+      win.postToBackend(command);
+      return;
+    }
+
+    // 2. 嘗試 JUCE 內部的 backend 物件路徑
+    const juce = win.__JUCE__;
+    if (juce && juce.backend) {
+      if (typeof juce.backend.postToBackend === 'function') {
+        juce.backend.postToBackend(command);
+        return;
+      }
+      // 嘗試透過 emitEvent 呼叫 (某些版本的 JUCE 實作)
+      if (typeof juce.backend.emitEvent === 'function') {
+        try {
           juce.backend.emitEvent("__juce__invoke", {
             name: "postToBackend",
             params: [command],
             resultId: 0
           });
           return;
-        }
-      } catch (error) {
-        console.error('[EngineService] Native IPC failed, falling back to HTTP', error);
+        } catch (e) { console.error('JUCE emitEvent failed', e); }
       }
     }
 
+    // 3. 最終回退：HTTP POST (開發環境或 Native 失敗時)
     try {
       await fetch(this.engineUrl, {
         method: 'POST',
-        mode: 'cors',
+        mode: 'no-cors', // 避免 CORS 預檢失敗
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(command),
+        body: commandStr,
       });
     } catch (error) {
-      // 靜默處理 HTTP 錯誤，避免在離線開發時產生過多 Log
+      // 靜默處理
     }
   }
 
@@ -95,6 +115,14 @@ export class EngineService {
 
   public setBPM(bpm: number) {
     this.sendCommand({ action: 'set_bpm', value: bpm });
+  }
+
+  public getTracks() {
+    this.sendCommand({ action: 'get_tracks' });
+  }
+
+  public getClipNotes(clipID: string) {
+    this.sendCommand({ action: 'get_clip_notes', clipID });
   }
 
   public showPluginWindow(trackID: string | number) {

@@ -64,6 +64,20 @@
                     <td>實現「五步驟順序」路由與 30Hz 訊號回傳。</td>
                 </tr>
                 <tr>
+                    <td><b>Transport Controller</b></td>
+                    <td><span class="code">TransportController.cpp/h</span></td>
+                    <td>封裝播放、停止、定位與 BPM 控制。</td>
+                    <td><span class="code">play()</span>, <span class="code">stop()</span>, <span class="code">setPosition()</span></td>
+                    <td>簡化 AudioEngine 職責。</td>
+                </tr>
+                <tr>
+                    <td><b>Recording Controller</b></td>
+                    <td><span class="code">RecordingController.cpp/h</span></td>
+                    <td>錄音狀態機、武裝檢查與 Clip 生成保存。</td>
+                    <td><span class="code">startRecording()</span>, <span class="code">stopAndSave()</span></td>
+                    <td>遵循「Save on Stop」模式。</td>
+                </tr>
+                <tr>
                     <td><b>Native / Web UI</b></td>
                     <td><span class="code">MainWindow.cpp/h</span>, <span class="code">MainComponent</span></td>
                     <td>承載原生視窗與 WebView2，處理 UI 與音訊初始化。</td>

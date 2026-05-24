@@ -80,10 +80,19 @@ const TrackHeader: React.FC<TrackHeaderProps> = ({ trackID, trackName, onShowPlu
   };
 
   return (
-    <div className="track-header" style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <span style={{ fontWeight: 600, fontSize: '14px' }}>{trackName}</span>
-        <div style={{ display: 'flex', gap: '4px' }}>
+    <div className="track-header" style={{ position: 'relative', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
+        <span style={{ 
+          fontWeight: 600, 
+          fontSize: '13px', 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          flex: 1
+        }} title={trackName}>
+          {trackName}
+        </span>
+        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
           <button className="view-btn" style={{ padding: '2px 6px', fontSize: '10px' }}>M</button>
           <button className="view-btn" style={{ padding: '2px 6px', fontSize: '10px' }}>S</button>
           <button 

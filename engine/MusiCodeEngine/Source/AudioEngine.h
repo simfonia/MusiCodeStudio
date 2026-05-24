@@ -10,11 +10,15 @@
  * AudioEngine - 封裝 Tracktion Engine 的核心邏輯
  * 負責管理 te::Engine, te::Edit 與各功能控制器。
  */
-class AudioEngine 
+class AudioEngine : private juce::Timer
 {
 public:
     AudioEngine();
     ~AudioEngine();
+
+    // 事件回呼
+    using TracksChangedCallback = std::function<void(const juce::var&)>;
+    void setTracksChangedCallback(TracksChangedCallback callback) { tracksChangedCallback = callback; }
 
     // 播放與錄音控制 (委派給對應 Controller)
     void play();
@@ -50,6 +54,9 @@ private:
     // 新增模組化控制器
     std::unique_ptr<MusiCode::TransportController> transportController;
     std::unique_ptr<MusiCode::RecordingController> recordingController;
+
+    void timerCallback() override;
+    TracksChangedCallback tracksChangedCallback;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 };
