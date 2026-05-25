@@ -30,6 +30,49 @@ void CommandRouter::registerHandlers()
         updateStatus("MusiCode Engine: BPM -> " + juce::String(bpm, 1), juce::Colours::blue);
     };
 
+    commandHandlers["set_time_signature"] = [this](const juce::var& params) {
+        int n = params.getProperty("numerator", 4);
+        int d = params.getProperty("denominator", 4);
+        audioEngine.getTransportController().setTimeSignature(n, d);
+        updateStatus("Time Sig -> " + juce::String(n) + "/" + juce::String(d), juce::Colours::blue);
+    };
+
+    commandHandlers["set_loop_range"] = [this](const juce::var& params) {
+        double s = params.getProperty("start", 0.0);
+        double e = params.getProperty("end", 4.0);
+        
+        // --- [關鍵防呆] 確保 Start <= End，防止 TimeRange 斷言崩倉 ---
+        double actualStart = std::min(s, e);
+        double actualEnd = std::max(s, e);
+        
+        // 最小長度保護 (例如 0.1 秒)
+        if (actualEnd - actualStart < 0.1) actualEnd = actualStart + 0.1;
+
+        auto range = tracktion::TimeRange(tracktion::TimePosition::fromSeconds(actualStart), 
+                                         tracktion::TimePosition::fromSeconds(actualEnd));
+                                         
+        audioEngine.getTransportController().setLoopRange(range);
+        updateStatus("Loop Set: " + juce::String(actualStart, 1) + "s - " + juce::String(actualEnd, 1) + "s", juce::Colours::cyan);
+    };
+
+    commandHandlers["set_loop_enabled"] = [this](const juce::var& params) {
+        bool enabled = params.getProperty("enabled", false);
+        audioEngine.getTransportController().setLoopEnabled(enabled);
+        updateStatus(enabled ? "Looping: ON" : "Looping: OFF", juce::Colours::cyan);
+    };
+
+    commandHandlers["set_click_enabled"] = [this](const juce::var& params) {
+        bool enabled = params.getProperty("enabled", false);
+        audioEngine.getTransportController().setClickEnabled(enabled);
+        updateStatus(enabled ? "Metronome: ON" : "Metronome: OFF", juce::Colours::yellow);
+    };
+
+    commandHandlers["set_position"] = [this](const juce::var& params) {
+        double seconds = params.getProperty("seconds", 0.0);
+        audioEngine.getTransportController().setPosition(tracktion::TimePosition::fromSeconds(seconds));
+        updateStatus("Seek -> " + juce::String(seconds, 2) + "s", juce::Colours::white);
+    };
+
     commandHandlers["show_plugin_window"] = [this](const juce::var& params) {
         tracktion_engine::EditItemID trackID;
         
@@ -124,6 +167,31 @@ void CommandRouter::registerHandlers()
             updateStatus("Track " + trackID.toString() + " Input -> " + deviceName, juce::Colours::green);
         else
             updateStatus("Failed to set Track " + trackID.toString() + " Input", juce::Colours::red);
+    };
+
+    commandHandlers["delete_clip"] = [this](const juce::var& params) {
+        juce::String clipIDStr = params.getProperty("clipID", "").toString();
+        auto clipID = tracktion_engine::EditItemID::fromString(clipIDStr);
+        
+        bool deleted = false;
+        for (auto track : tracktion_engine::getAudioTracks(audioEngine.getEdit()))
+        {
+            for (auto clip : track->getClips())
+            {
+                if (clip->itemID == clipID)
+                {
+                    clip->removeFromParent();
+                    deleted = true;
+                    break;
+                }
+            }
+            if (deleted) break;
+        }
+        
+        if (deleted)
+            updateStatus("Clip Deleted: " + clipIDStr, juce::Colours::orange);
+        else
+            updateStatus("Failed to delete Clip: " + clipIDStr, juce::Colours::red);
     };
 }
 

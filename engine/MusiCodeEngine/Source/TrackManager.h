@@ -84,7 +84,7 @@ namespace MusiCode
                                 juce::DynamicObject::Ptr nObj = new juce::DynamicObject();
                                 nObj->setProperty("pitch", note->getNoteNumber());
                                 nObj->setProperty("start", note->getStartBeat().inBeats());
-                                nObj->setProperty("len", note->getLengthBeats().inBeats());
+                                nObj->setProperty("length", note->getLengthBeats().inBeats());
                                 previewNotes.add(nObj.get());
                             }
                             clipObj->setProperty("notes", previewNotes);

@@ -19,8 +19,8 @@ MainComponent::MainComponent(AudioEngine& engine)
         statusLabel.setColour(juce::Label::textColourId, color);
     });
 
-    // 3. 初始化 Web 控制器 (模組化)
-    webController = std::make_unique<MusiCode::WebController>(*router);
+    // 3. 初始化 Web 控制器 (傳入 TransportController 支援同步)
+    webController = std::make_unique<MusiCode::WebController>(*router, audioEngine.getTransportController());
     addAndMakeVisible(webController->getBrowser());
 
     // 4. 注入回呼

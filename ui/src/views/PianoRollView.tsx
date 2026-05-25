@@ -12,12 +12,30 @@ interface PianoRollViewProps {
 
 const PianoRollView: React.FC<PianoRollViewProps> = ({ notes = [] }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // 鋼琴捲軸配置
   const keyHeight = 20;
   const pixelsPerBeat = 80;
   const totalKeys = 128;
   const visibleBeats = 16;
+
+  // 自動捲動到第一個音符
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // 尋找第一個音符的音高，若無音符則預設為 C4 (pitch 60)
+    const targetPitch = notes.length > 0 ? notes[0].pitch : 60;
+    
+    // 計算目標 Y 座標 (127 為最上方，0 為最下方)
+    const noteY = (127 - targetPitch) * keyHeight;
+    const containerHeight = containerRef.current.clientHeight;
+    
+    // 設定捲軸位置，使音符垂直居中
+    containerRef.current.scrollTop = noteY - (containerHeight / 2) + (keyHeight / 2);
+    
+    console.log(`[PianoRoll] Auto-scrolled to Pitch: ${targetPitch}, Y: ${noteY}`);
+  }, [notes]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -61,9 +79,8 @@ const PianoRollView: React.FC<PianoRollViewProps> = ({ notes = [] }) => {
     }
 
     // 3. 繪製音符 (由 Arrangement 傳入的 selectedClipNotes)
-    console.log('[PianoRollView] Drawing notes:', notes);
     notes.forEach(note => {
-      const noteLength = (note as any).length || note.len || 0.25; // 修正命名不匹配
+      const noteLength = note.length || (note as any).len || 0.25; 
       const x = note.start * pixelsPerBeat;
       const y = (127 - note.pitch) * keyHeight;
       const width = noteLength * pixelsPerBeat;
@@ -86,7 +103,7 @@ const PianoRollView: React.FC<PianoRollViewProps> = ({ notes = [] }) => {
   }, [notes]);
 
   return (
-    <div className="piano-roll-container" style={{ width: '100%', height: '100%', overflow: 'auto', background: '#fff' }}>
+    <div className="piano-roll-container" ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'auto', background: '#fff' }}>
       <canvas 
         ref={canvasRef} 
         width={visibleBeats * pixelsPerBeat} 

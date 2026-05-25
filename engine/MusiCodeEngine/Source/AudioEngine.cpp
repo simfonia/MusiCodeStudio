@@ -6,7 +6,10 @@
 namespace te = tracktion_engine;
 
 AudioEngine::AudioEngine()
-    : engine ("MusiCodeEngine", std::make_unique<MusiCodeUIBehaviour>(), nullptr)
+    : engine ("MusiCodeEngine", std::make_unique<MusiCodeUIBehaviour>([this](const juce::String& type, const juce::String& msg) {
+        if (engineMessageCallback != nullptr)
+            engineMessageCallback(type, msg);
+      }), nullptr)
 {
     using namespace tracktion_engine;
 
@@ -43,7 +46,10 @@ void AudioEngine::timerCallback()
     if (tracksChangedCallback != nullptr && edit != nullptr)
     {
         auto json = MusiCode::TrackManager::getTracksInfo(*edit);
-        tracksChangedCallback(json);
+        juce::MessageManager::callAsync([this, json]() {
+            if (tracksChangedCallback != nullptr)
+                tracksChangedCallback(json);
+        });
     }
 }
 
@@ -107,7 +113,9 @@ AudioEngine::~AudioEngine()
 
 void AudioEngine::play()
 {
-    transportController->play();
+    // 讀取目前的循環設定
+    bool loop = transportController->isLoopEnabled();
+    transportController->play(loop);
 }
 
 void AudioEngine::stop()

@@ -18,6 +18,9 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('arrangement');
   const [bpm, setBpm] = useState(120);
   const [isRecording, setIsRecording] = useState(false);
+  const [isMetronomeOn, setIsMetronomeOn] = useState(false);
+  const [isLoopOn, setIsLoopOn] = useState(false);
+  const [timeSig, setTimeSig] = useState({ n: 4, d: 4 });
   const [filterFreq, setFilterFreq] = useState(0.5);
   
   // 模擬軌道資料 (後續可由 C++ 同步)
@@ -34,7 +37,6 @@ function App() {
     // 監聽來自 C++ 的軌道列表同步
     const handleTracksSync = (e: any) => {
       if (e.detail && Array.isArray(e.detail)) {
-        console.log('[App] Tracks Sync:', e.detail);
         setTracks(e.detail);
       }
     };
@@ -73,6 +75,12 @@ function App() {
         setBpm={setBpm} 
         isRecording={isRecording} 
         setIsRecording={setIsRecording} 
+        isMetronomeOn={isMetronomeOn}
+        setIsMetronomeOn={setIsMetronomeOn}
+        isLoopOn={isLoopOn}
+        setIsLoopOn={setIsLoopOn}
+        timeSig={timeSig}
+        setTimeSig={setTimeSig}
       />
 
       <main className="main-container">
@@ -99,7 +107,13 @@ function App() {
 
           <div className="canvas-area">
             {viewMode === 'arrangement' && (
-              <ArrangementView tracks={tracks} bpm={bpm} onSelectClip={handleSelectClip} />
+              <ArrangementView 
+                tracks={tracks} 
+                bpm={bpm} 
+                timeSigNumerator={timeSig.n}
+                timeSigDenominator={timeSig.d}
+                onSelectClip={handleSelectClip} 
+              />
             )}
             {viewMode === 'piano' && <PianoRollView notes={selectedClipNotes} />}
             {viewMode === 'blockly' && <BlocklyView />}

@@ -20,6 +20,9 @@ public:
     using TracksChangedCallback = std::function<void(const juce::var&)>;
     void setTracksChangedCallback(TracksChangedCallback callback) { tracksChangedCallback = callback; }
 
+    using EngineMessageCallback = std::function<void(const juce::String&, const juce::String&)>;
+    void setEngineMessageCallback(EngineMessageCallback callback) { engineMessageCallback = callback; }
+
     // 播放與錄音控制 (委派給對應 Controller)
     void play();
     void stop();
@@ -57,6 +60,7 @@ private:
 
     void timerCallback() override;
     TracksChangedCallback tracksChangedCallback;
+    EngineMessageCallback engineMessageCallback;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 };

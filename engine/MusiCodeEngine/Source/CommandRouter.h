@@ -28,6 +28,16 @@ public:
             if (eventCallback != nullptr)
                 eventCallback("tracks_list", json);
         });
+
+        audioEngine.setEngineMessageCallback([this](const juce::String& type, const juce::String& message) {
+            if (eventCallback != nullptr)
+            {
+                juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+                obj->setProperty("messageType", type);
+                obj->setProperty("message", message);
+                eventCallback("engine_message", obj.get());
+            }
+        });
     }
 
 private:

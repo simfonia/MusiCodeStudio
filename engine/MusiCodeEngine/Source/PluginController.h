@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include <tracktion_engine/tracktion_engine.h>
 
 namespace te = tracktion_engine;
 
@@ -14,10 +15,10 @@ public:
           plugin(plug)
     {
         setUsingNativeTitleBar(true);
-        
+
         // 嘗試建立插件編輯器
         editor = plugin.createEditor();
-        
+
         if (editor != nullptr)
         {
             setContentNonOwned(editor.get(), true);
@@ -31,7 +32,7 @@ public:
             fallbackLabel->setColour(juce::Label::textColourId, juce::Colours::black);
             setContentOwned(fallbackLabel, true);
         }
-        
+
         setResizable(true, false);
         setCentreRelative(0.5f, 0.5f);
         setSize(400, 300);
@@ -57,15 +58,34 @@ private:
 class MusiCodeUIBehaviour : public te::UIBehaviour
 {
 public:
-    MusiCodeUIBehaviour() = default;
+    using MessageCallback = std::function<void(const juce::String&, const juce::String&)>;
+
+    MusiCodeUIBehaviour(MessageCallback cb = nullptr) : messageCallback(cb) {}
 
     std::unique_ptr<juce::Component> createPluginWindow(te::PluginWindowState& pws) override
     {
         if (auto* ws = dynamic_cast<te::Plugin::WindowState*>(&pws))
             return std::make_unique<PluginWindow>(ws->plugin);
 
-        return {}; 
+        return {};
     }
+
+    void showWarningMessage(const juce::String& message) override
+    {
+        DBG("TE WARNING: " + message);
+        if (messageCallback != nullptr)
+            messageCallback("warning", message);
+    }
+
+    void showInfoMessage(const juce::String& message) override
+    {
+        DBG("TE INFO: " + message);
+        if (messageCallback != nullptr)
+            messageCallback("info", message);
+    }
+
+private:
+    MessageCallback messageCallback;
 };
 
 /**

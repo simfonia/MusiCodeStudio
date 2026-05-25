@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Square, Circle, Settings, Volume2 } from 'lucide-react';
+import { Play, Square, Circle, Settings, Volume2, Bell, Repeat } from 'lucide-react';
 import { EngineService } from '../services/EngineService';
 
 interface ToolbarProps {
@@ -7,12 +7,68 @@ interface ToolbarProps {
   setBpm: (bpm: number) => void;
   isRecording: boolean;
   setIsRecording: (rec: boolean) => void;
+  isMetronomeOn: boolean;
+  setIsMetronomeOn: (on: boolean) => void;
+  isLoopOn: boolean;
+  setIsLoopOn: (on: boolean) => void;
+  timeSig: { n: number, d: number };
+  setTimeSig: (sig: { n: number, d: number }) => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ bpm, setBpm, isRecording, setIsRecording }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ 
+  bpm, setBpm, 
+  isRecording, setIsRecording,
+  isMetronomeOn, setIsMetronomeOn,
+  isLoopOn, setIsLoopOn,
+  timeSig, setTimeSig
+}) => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const settingsMenuRef = useRef<HTMLDivElement>(null);
   const engine = EngineService.getInstance();
+  
+  // BPM 局部狀態 (防止輸入時自動補 0)
+  const [localBpm, setLocalBpm] = useState(bpm.toString());
+
+  useEffect(() => {
+    setLocalBpm(bpm.toString());
+  }, [bpm]);
+
+  const handleBpmBlur = () => {
+    const val = parseFloat(localBpm);
+    if (!isNaN(val) && val >= 20 && val <= 400) {
+      setBpm(val);
+    } else {
+      setLocalBpm(bpm.toString());
+    }
+  };
+
+  const handleBpmKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleBpmBlur();
+  };
+
+  const toggleMetronome = () => {
+    const next = !isMetronomeOn;
+    setIsMetronomeOn(next);
+    engine.sendCommand({ action: 'set_click_enabled', enabled: next } as any);
+  };
+
+  const toggleLoop = () => {
+    const next = !isLoopOn;
+    setIsLoopOn(next);
+    engine.sendCommand({ action: 'set_loop_enabled', enabled: next } as any);
+  };
+
+  const handleTimeSigNChange = (n: number) => {
+    const next = { ...timeSig, n };
+    setTimeSig(next);
+    engine.sendCommand({ action: 'set_time_signature', numerator: n, denominator: timeSig.d } as any);
+  };
+
+  const handleTimeSigDChange = (d: number) => {
+    const next = { ...timeSig, d };
+    setTimeSig(next);
+    engine.sendCommand({ action: 'set_time_signature', numerator: timeSig.n, denominator: d } as any);
+  };
 
   const handleShowAudioSettings = () => {
     engine.showAudioSettings();
@@ -67,16 +123,52 @@ const Toolbar: React.FC<ToolbarProps> = ({ bpm, setBpm, isRecording, setIsRecord
         </button>
       </div>
 
+      <div style={{ marginLeft: '20px', display: 'flex', gap: '4px' }}>
+        <button 
+          className={`transport-btn ${isMetronomeOn ? 'active' : ''}`} 
+          onClick={toggleMetronome}
+          style={{ color: isMetronomeOn ? 'var(--accent)' : 'inherit' }}
+          title="節拍器"
+        >
+          <Bell size={16} fill={isMetronomeOn ? 'currentColor' : 'none'} />
+        </button>
+        <button 
+          className={`transport-btn ${isLoopOn ? 'active' : ''}`} 
+          onClick={toggleLoop}
+          style={{ color: isLoopOn ? 'var(--accent)' : 'inherit' }}
+          title="循環播放"
+        >
+          <Repeat size={16} />
+        </button>
+      </div>
+
       <div style={{ marginLeft: '40px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <div style={{ fontSize: '14px', color: 'var(--text-dim)' }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-dim)', display: 'flex', alignItems: 'center' }}>
           BPM: <input 
-            type="number" 
-            value={bpm} 
-            onChange={(e) => setBpm(Number(e.target.value))}
-            style={{ width: '45px', background: 'none', border: 'none', borderBottom: '1px solid transparent', fontWeight: 600, fontSize: '15px', color: 'var(--accent)' }}
+            type="text" 
+            value={localBpm} 
+            onChange={(e) => setLocalBpm(e.target.value.replace(/[^0-9.]/g, ''))}
+            onBlur={handleBpmBlur}
+            onKeyDown={handleBpmKeyDown}
+            style={{ width: '45px', background: 'none', border: 'none', marginLeft: '5px', fontWeight: 600, fontSize: '14px', color: 'var(--accent)' }}
           />
         </div>
-        <div style={{ fontSize: '14px', color: 'var(--text-dim)' }}>4 / 4</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-dim)', display: 'flex', alignItems: 'center' }}>
+          SIG: 
+          <input 
+            type="number" 
+            value={timeSig.n} 
+            onChange={(e) => handleTimeSigNChange(Number(e.target.value))}
+            style={{ width: '25px', background: 'none', border: 'none', marginLeft: '5px', fontWeight: 600, fontSize: '14px', color: 'var(--accent)', textAlign: 'center' }}
+          />
+          <span style={{ margin: '0 2px' }}>/</span>
+          <input 
+            type="number" 
+            value={timeSig.d} 
+            onChange={(e) => handleTimeSigDChange(Number(e.target.value))}
+            style={{ width: '25px', background: 'none', border: 'none', fontWeight: 600, fontSize: '14px', color: 'var(--accent)', textAlign: 'center' }}
+          />
+        </div>
       </div>
 
       <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', position: 'relative' }} ref={settingsMenuRef}>

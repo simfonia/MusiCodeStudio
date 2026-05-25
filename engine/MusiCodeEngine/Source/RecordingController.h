@@ -26,6 +26,8 @@ namespace MusiCode
     private:
         tracktion_engine::Edit& edit;
         TransportController& transportController;
+        bool isProcessing = false;
+        bool wasClickEnabledBeforeRecording = false;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RecordingController)
     };

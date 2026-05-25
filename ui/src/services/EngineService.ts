@@ -34,8 +34,8 @@ export class EngineService {
   }
 
   private handleEngineEvent(event: { type: string, detail: any }) {
-    // 僅對重要事件進行 Log，避免 tracks_list 灌爆 Console
-    if (event.type !== 'tracks_list' && event.type !== 'midi_signal') {
+    // 僅對重要事件進行 Log，避免 tracks_list 與 playhead_sync 灌爆 Console
+    if (event.type !== 'tracks_list' && event.type !== 'midi_signal' && event.type !== 'playhead_sync') {
       console.log(`[EngineService] Received Event: ${event.type}`, event.detail);
     }
     
@@ -48,6 +48,12 @@ export class EngineService {
       window.dispatchEvent(new CustomEvent('MusiCode_TracksList', { detail: event.detail }));
     } else if (event.type === 'clip_notes_list') {
       window.dispatchEvent(new CustomEvent('MusiCode_ClipNotesList', { detail: event.detail }));
+    } else if (event.type === 'playhead_sync') {
+      window.dispatchEvent(new CustomEvent('MusiCode_PlayheadSync', { detail: event.detail }));
+    } else if (event.type === 'engine_message') {
+      const { messageType, message } = event.detail;
+      const style = messageType === 'warning' ? 'color: orange; font-weight: bold;' : 'color: cyan;';
+      console.log(`%c[Tracktion Engine ${messageType.toUpperCase()}] ${message}`, style);
     }
   }
 
